@@ -1,0 +1,28 @@
+import { Router, Request, Response } from "express";
+import LikeController from "./like.controller";
+import LikeService from "./like.service";
+
+const likeRouters = Router();
+
+const likeService = new LikeService()
+const likeController = new LikeController(likeService)
+
+likeRouters.post('/toggle',
+    (req: Request, res: Response) => {likeController.toggle(req, res)}
+);
+
+likeRouters.get('/count/:post_id',
+    ((req: Request, res: Response) => { likeController.countByPost(req, res) })
+);
+likeRouters.get('/',
+    ((req: Request, res: Response) => { likeController.getAll(req, res) })
+);
+likeRouters.get('/:id',
+    ((req: Request, res: Response) => { likeController.getAll(req, res) })
+);
+ 
+likeRouters.delete('/:id',
+    ((req: Request, res: Response) => { likeController.delete(req, res) })
+);
+
+export default likeRouters;
