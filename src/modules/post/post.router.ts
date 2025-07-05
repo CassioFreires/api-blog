@@ -13,7 +13,7 @@ const userController = new PostController(postService)
 
 postRouters.post('/',
     ((req:Request, res:Response, next:NextFunction) => {authMiddleware.auth(req, res, next)}),
-    // checkRole(['usuário registrado']),
+    checkRole(['usuário comum']),
     ((req: Request, res: Response) => { userController.create(req, res) })
 );
 postRouters.get('/',

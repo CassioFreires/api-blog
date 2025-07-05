@@ -15,10 +15,10 @@ export default class AuthService {
     async signup(data: SignupAuthDto): Promise<any> {
         try {
             const userExist = await this.userRepository.getByEmail(data.email);
-            const roleExist = await this.RoleRepository.getByName('usuário registrado');
+            const roleExist = await this.RoleRepository.getByName('usuário comum');
 
             if (userExist) return { message: "Email já está em uso" }
-            if (!roleExist) return { message: "Role padrão não existe para aplicar ao usuário registrado!" }
+            if (!roleExist) return { message: "Role padrão não existe para aplicar ao usuário comum!" }
 
             const password_hash = await hashPassword(data.password_hash);
 

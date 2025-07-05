@@ -62,11 +62,11 @@ class AuthService {
             var _a;
             try {
                 const userExist = yield this.userRepository.getByEmail(data.email);
-                const roleExist = yield this.RoleRepository.getByName('usuário registrado');
+                const roleExist = yield this.RoleRepository.getByName('usuário comum');
                 if (userExist)
                     return { message: "Email já está em uso" };
                 if (!roleExist)
-                    return { message: "Role padrão não existe para aplicar ao usuário registrado!" };
+                    return { message: "Role padrão não existe para aplicar ao usuário comum!" };
                 const password_hash = yield (0, hashPassword_1.hashPassword)(data.password_hash);
                 const newData = {
                     name: data.name.toLocaleLowerCase(),
