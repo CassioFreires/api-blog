@@ -25,7 +25,7 @@ export default class UserEntity {
   name!: string;
 
   @Column({ length: 100 })
-  fullName!: string;
+  lastName!: string;
 
   @Column({ length: 150, unique: true })
   email!: string;

@@ -22,7 +22,7 @@ class UserService {
                 const hashedPassword = yield (0, hashPassword_1.hashPassword)(data.password_hash);
                 const newData = {
                     name: data.name.toLocaleLowerCase(),
-                    fullName: data.fullName.toLocaleLowerCase(),
+                    lastName: data.lastName.toLocaleLowerCase(),
                     email: data.email.toLocaleLowerCase(),
                     password_hash: hashedPassword,
                     bio: data === null || data === void 0 ? void 0 : data.bio,

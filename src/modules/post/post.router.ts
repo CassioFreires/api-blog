@@ -19,6 +19,9 @@ postRouters.post('/',
 postRouters.get('/',
     ((req: Request, res: Response) => { userController.getAll(req, res) })
 );
+postRouters.get('/top',
+    ((req: Request, res: Response) => { userController.getTop(req, res) })
+);
 postRouters.get('/:id',
     ((req: Request, res: Response) => { userController.getById(req, res) })
 );

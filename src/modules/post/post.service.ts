@@ -24,9 +24,19 @@ export default class PostService {
         }
     }
 
-    async getAll(): Promise<IPost[] | IReturnResponse> {
+    async getAll(limit:number, page:number): Promise<IReturnResponse> {
         try {
-            const posts = await this.postRepository.getAll();
+            const posts = await this.postRepository.getAll(limit, page);
+            return posts;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
+    async getTop(): Promise<IPost[] | IReturnResponse> {
+        try {
+            const posts = await this.postRepository.getTop();
             return posts;
         } catch (error) {
             console.log(error);
@@ -60,11 +70,11 @@ export default class PostService {
         }
     }
 
-    async delete(id:number):Promise<IPost | IReturnResponse | null> {
+    async delete(id: number): Promise<IPost | IReturnResponse | null> {
         try {
             const post = await this.postRepository.delete(id);
             return post;
-        }catch(error) {
+        } catch (error) {
             console.log(error);
             throw error;
         }

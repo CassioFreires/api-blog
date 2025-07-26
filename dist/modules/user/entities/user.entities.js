@@ -27,7 +27,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ length: 100 }),
     __metadata("design:type", String)
-], UserEntity.prototype, "fullName", void 0);
+], UserEntity.prototype, "lastName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ length: 150, unique: true }),
     __metadata("design:type", String)

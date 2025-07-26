@@ -49,6 +49,18 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => comment_entities_1.CommentEntity, comment => comment.post),
     __metadata("design:type", Array)
 ], PostEntity.prototype, "comments", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], PostEntity.prototype, "createAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], PostEntity.prototype, "updatAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)(),
+    __metadata("design:type", Date)
+], PostEntity.prototype, "delatAt", void 0);
 exports.PostEntity = PostEntity = __decorate([
     (0, typeorm_1.Entity)('post')
 ], PostEntity);

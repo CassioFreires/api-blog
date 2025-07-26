@@ -35,10 +35,22 @@ class PostService {
             }
         });
     }
-    getAll() {
+    getAll(limit, page) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const posts = yield this.postRepository.getAll();
+                const posts = yield this.postRepository.getAll(limit, page);
+                return posts;
+            }
+            catch (error) {
+                console.log(error);
+                throw error;
+            }
+        });
+    }
+    getTop() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const posts = yield this.postRepository.getTop();
                 return posts;
             }
             catch (error) {

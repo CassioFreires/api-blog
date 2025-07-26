@@ -5,7 +5,7 @@ import { UserRepository } from '../../user.repository';
 const mockUser = {
   id: 1,
   name: 'cassio',
-  fullName: 'cassio leopoldo freires souza',
+  lastName: 'cassio leopoldo freires souza',
   email: 'cassio_souza@live.com',
   password_hash: '123456'
 };
@@ -30,7 +30,7 @@ describe('UserService', () => {
   it('create() - deve criar e retornar usuário com dados normalizados', async () => {
     const newData = {
       name: 'CASSIO', // será convertido para minúsculo no service
-      fullName: 'CASSIO LEOPOLDO FREIRES SOUZA',
+      lastName: 'CASSIO LEOPOLDO FREIRES SOUZA',
       email: 'CASSIO_SOUZA@LIVE.COM',
       password_hash: '123456',
     };
@@ -40,7 +40,7 @@ describe('UserService', () => {
     // Verifica se o create do repositório foi chamado com os dados em lowercase
     expect(mockRepository.create).toHaveBeenCalledWith({
       name: 'cassio',
-      fullName: 'cassio leopoldo freires souza',
+      lastName: 'cassio leopoldo freires souza',
       email: 'cassio_souza@live.com',
       password_hash: '123456',
     });
@@ -64,7 +64,7 @@ describe('UserService', () => {
   });
 
   it('update() - deve atualizar usuário', async () => {
-    const updateData = { fullName: 'Novo Nome' };
+    const updateData = { lastName: 'Novo Nome' };
     const result = await service.update(1, updateData);
 
     expect(mockRepository.update).toHaveBeenCalledWith(1, updateData);

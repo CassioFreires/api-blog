@@ -27,7 +27,7 @@ describe('UserRepository', () => {
   });
 
   it('create() - deve criar e salvar um usuário', async () => {
-    const data = { name: 'cassio', fullName: 'Cassio Souza', email: 'cassio@teste.com', password_hash: '123456' };
+    const data = { name: 'cassio', lastName: 'Cassio Souza', email: 'cassio@teste.com', password_hash: '123456' };
     const userEntity = new UserEntity();
 
     mockTypeOrmRepo.create.mockReturnValue(userEntity);

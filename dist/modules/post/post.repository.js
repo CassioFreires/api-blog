@@ -37,11 +37,52 @@ class PostRepository {
             }
         });
     }
-    getAll() {
+    getAll(limit, page) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const posts = yield this.repo.find({ relations: ['user'] });
-                return posts;
+                const [posts, total] = yield this.repo.findAndCount({
+                    relations: ['user'],
+                    order: {
+                        createAt: 'DESC'
+                    },
+                    skip: (page - 1) * limit,
+                    take: limit
+                });
+                return {
+                    message: 'Postagens encontradas com sucesso',
+                    pagination: {
+                        currentPage: page,
+                        totalItems: total,
+                        totalPages: Math.ceil(total / limit),
+                        perPage: limit,
+                        hasNextPage: page < Math.ceil(total / limit),
+                        hasPreviousPage: page > 1,
+                        nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
+                        previousPage: page > 1 ? page - 1 : null
+                    },
+                    data: posts
+                };
+            }
+            catch (error) {
+                console.log(error);
+                throw error;
+            }
+        });
+    }
+    getTop() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const posts = yield this.repo.find({
+                    relations: ['user'],
+                    order: {
+                        createAt: 'DESC'
+                    },
+                    take: 3
+                });
+                return {
+                    message: 'Postagens encontradas com sucesso',
+                    data: posts,
+                };
             }
             catch (error) {
                 console.log(error);
@@ -56,7 +97,13 @@ class PostRepository {
                     where: { id },
                     relations: ['user']
                 });
-                return post;
+                if (!post) {
+                    return { message: 'Post não encontrado' };
+                }
+                return {
+                    message: 'Postagens encontradas com sucesso',
+                    data: post,
+                };
             }
             catch (error) {
                 console.log(error);

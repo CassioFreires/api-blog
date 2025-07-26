@@ -19,7 +19,7 @@ class AuthController {
     signup(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const signupAuthDto = req.body;
+                const signupAuthDto = req.body.data;
                 const validation = validation_signup_schema_1.validationSignupSchema.safeParse(signupAuthDto);
                 if (!validation.success) {
                     return res.status(400).json({
@@ -42,12 +42,17 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const result = yield this.authService.signin(req.body);
-                console.log(result);
+                if ((result === null || result === void 0 ? void 0 : result.message) === 'Usuário não encontrado') {
+                    return res.status(404).json({ message: result.error });
+                }
+                if ((result === null || result === void 0 ? void 0 : result.message) === 'Senha inválida') {
+                    return res.status(401).json({ message: result.error });
+                }
                 return res.status(200).json(result);
             }
             catch (error) {
-                console.log(error);
-                return res.status(401).json({ message: "Credenciais inválidas" });
+                console.error(error);
+                return res.status(500).json({ message: "Erro interno do servidor" });
             }
         });
     }

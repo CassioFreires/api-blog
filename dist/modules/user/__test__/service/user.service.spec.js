@@ -14,7 +14,7 @@ const user_service_1 = require("../../user.service");
 const mockUser = {
     id: 1,
     name: 'cassio',
-    fullName: 'cassio leopoldo freires souza',
+    lastName: 'cassio leopoldo freires souza',
     email: 'cassio_souza@live.com',
     password_hash: '123456'
 };
@@ -35,7 +35,7 @@ describe('UserService', () => {
     it('create() - deve criar e retornar usuário com dados normalizados', () => __awaiter(void 0, void 0, void 0, function* () {
         const newData = {
             name: 'CASSIO', // será convertido para minúsculo no service
-            fullName: 'CASSIO LEOPOLDO FREIRES SOUZA',
+            lastName: 'CASSIO LEOPOLDO FREIRES SOUZA',
             email: 'CASSIO_SOUZA@LIVE.COM',
             password_hash: '123456',
         };
@@ -43,7 +43,7 @@ describe('UserService', () => {
         // Verifica se o create do repositório foi chamado com os dados em lowercase
         expect(mockRepository.create).toHaveBeenCalledWith({
             name: 'cassio',
-            fullName: 'cassio leopoldo freires souza',
+            lastName: 'cassio leopoldo freires souza',
             email: 'cassio_souza@live.com',
             password_hash: '123456',
         });
@@ -61,7 +61,7 @@ describe('UserService', () => {
         expect(result).toEqual(mockUser);
     }));
     it('update() - deve atualizar usuário', () => __awaiter(void 0, void 0, void 0, function* () {
-        const updateData = { fullName: 'Novo Nome' };
+        const updateData = { lastName: 'Novo Nome' };
         const result = yield service.update(1, updateData);
         expect(mockRepository.update).toHaveBeenCalledWith(1, updateData);
         expect(result).toEqual(mockUser);

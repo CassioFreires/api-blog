@@ -13,7 +13,7 @@ export class UserService {
       const hashedPassword = await hashPassword(data.password_hash);
       const newData = {
         name: data.name.toLocaleLowerCase(),
-        fullName: data.fullName.toLocaleLowerCase(),
+        lastName: data.lastName.toLocaleLowerCase(),
         email: data.email.toLocaleLowerCase(),
         password_hash: hashedPassword,
         bio: data?.bio,

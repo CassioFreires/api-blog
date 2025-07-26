@@ -24,7 +24,7 @@ export default class AuthService {
 
             const newData: SignupAuthDto = {
                 name: data.name.toLocaleLowerCase(),
-                fullName: data.fullName.toLocaleLowerCase(),
+                lastName: data.lastName.toLocaleLowerCase(),
                 email: data.email.toLocaleLowerCase(),
                 password_hash: password_hash,
                 bio: data?.bio?.toLocaleLowerCase(),
@@ -51,8 +51,9 @@ export default class AuthService {
             if (!user) return { message: 'Usuário não encontrado' };
 
             const isPasswordValid = await comparePassword(newData.password_hash, user.password_hash);
+            console.log(isPasswordValid)
             if (!isPasswordValid) {
-                return { message: 'Senha inválida' };
+                return { message: 'Senha inválida', isPasswordValid };
             }
 
             if (user.isTwoFactorEnabled) {
@@ -63,15 +64,18 @@ export default class AuthService {
                     twoFactorEnabled: true
                 };
             }
-
+            console.log(user)
             return {
                 message: 'Usuário autenticado',
                 user: {
                     id: user.id,
                     name: user.name,
-                    fullName: user.fullName,
+                    fullName: user.lastName,
                     email: user.email,
+                    bio: user.bio,
+                    avataUrl: user.avatarUrl,
                     isTwoFactorEnabled: user.isTwoFactorEnabled,
+                    role: user.role
                 }
             };
 
@@ -128,7 +132,7 @@ export default class AuthService {
             const newUser = {
                 id: user.id,
                 name: user.name,
-                fullName: user.fullName,
+                fullName: user.lastName,
                 role: user.role
             }
             const jwtToken = generateToken(newUser); // Implemente a função generateJWT conforme seu contexto

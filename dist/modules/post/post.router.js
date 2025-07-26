@@ -14,6 +14,7 @@ const postService = new post_service_1.default();
 const userController = new post_controller_1.default(postService);
 postRouters.post('/', ((req, res, next) => { authMiddleware.auth(req, res, next); }), (0, authRole_middleware_1.checkRole)(['usuário comum']), ((req, res) => { userController.create(req, res); }));
 postRouters.get('/', ((req, res) => { userController.getAll(req, res); }));
+postRouters.get('/top', ((req, res) => { userController.getTop(req, res); }));
 postRouters.get('/:id', ((req, res) => { userController.getById(req, res); }));
 postRouters.patch('/:id', ((req, res) => { userController.update(req, res); }));
 postRouters.delete('/:id', ((req, res) => { userController.delete(req, res); }));

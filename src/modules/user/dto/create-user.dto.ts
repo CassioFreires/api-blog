@@ -1,7 +1,7 @@
 
 export class CreateUserDTO {
   name!:string;
-  fullName!: string;
+  lastName!: string;
   email!: string;
   password_hash!: string;
   bio?:string;

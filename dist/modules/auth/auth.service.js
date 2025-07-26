@@ -70,7 +70,7 @@ class AuthService {
                 const password_hash = yield (0, hashPassword_1.hashPassword)(data.password_hash);
                 const newData = {
                     name: data.name.toLocaleLowerCase(),
-                    fullName: data.fullName.toLocaleLowerCase(),
+                    lastName: data.lastName.toLocaleLowerCase(),
                     email: data.email.toLocaleLowerCase(),
                     password_hash: password_hash,
                     bio: (_a = data === null || data === void 0 ? void 0 : data.bio) === null || _a === void 0 ? void 0 : _a.toLocaleLowerCase(),
@@ -97,8 +97,9 @@ class AuthService {
                 if (!user)
                     return { message: 'Usuário não encontrado' };
                 const isPasswordValid = yield (0, hashPassword_2.comparePassword)(newData.password_hash, user.password_hash);
+                console.log(isPasswordValid);
                 if (!isPasswordValid) {
-                    return { message: 'Senha inválida' };
+                    return { message: 'Senha inválida', isPasswordValid };
                 }
                 if (user.isTwoFactorEnabled) {
                     // Aqui você pode decidir se vai exigir token 2FA agora ou em outra etapa
@@ -108,14 +109,18 @@ class AuthService {
                         twoFactorEnabled: true
                     };
                 }
+                console.log(user);
                 return {
                     message: 'Usuário autenticado',
                     user: {
                         id: user.id,
                         name: user.name,
-                        fullName: user.fullName,
+                        fullName: user.lastName,
                         email: user.email,
+                        bio: user.bio,
+                        avataUrl: user.avatarUrl,
                         isTwoFactorEnabled: user.isTwoFactorEnabled,
+                        role: user.role
                     }
                 };
             }
@@ -170,7 +175,7 @@ class AuthService {
                 const newUser = {
                     id: user.id,
                     name: user.name,
-                    fullName: user.fullName,
+                    fullName: user.lastName,
                     role: user.role
                 };
                 const jwtToken = (0, generateToken_shared_1.generateToken)(newUser); // Implemente a função generateJWT conforme seu contexto

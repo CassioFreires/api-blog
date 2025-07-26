@@ -1,7 +1,7 @@
 import { CommentEntity } from "../../../modules/comment/entities/comment.entities";
 import { LikeEntity } from "../../../modules/like/entities/like.entities";
 import UserEntity from "../../../modules/user/entities/user.entities";
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from "typeorm";
 
 @Entity('post')
 export class PostEntity {
@@ -27,8 +27,13 @@ export class PostEntity {
     @OneToMany(() => CommentEntity, comment => comment.post)
     comments!:[];
 
+    @CreateDateColumn()
     createAt!: Date;
 
-    updateAt!: Date;
+    @UpdateDateColumn()
+    updatAt!: Date;
+
+    @DeleteDateColumn()
+    delatAt!: Date;
 
 }

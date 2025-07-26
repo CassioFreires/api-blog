@@ -51,8 +51,8 @@ class AuthRepository {
                 return yield this.userRepo.findOne({
                     where: { email },
                     select: [
-                        'id', 'name', 'fullName', 'email', 'password_hash',
-                        'twoFactorSecret', 'isTwoFactorEnabled', 'refreshToken'
+                        'id', 'name', 'lastName', 'email', 'password_hash',
+                        'twoFactorSecret', 'isTwoFactorEnabled', 'refreshToken', 'bio', 'avatarUrl', 'role'
                     ]
                 });
             }
@@ -77,7 +77,7 @@ class AuthRepository {
                         }
                     },
                     select: [
-                        'id', 'name', 'fullName', 'email', 'password_hash',
+                        'id', 'name', 'lastName', 'email', 'password_hash',
                         'twoFactorSecret', 'isTwoFactorEnabled',
                         'refreshToken', 'role_id'
                     ]

@@ -47,11 +47,27 @@ class PostController {
     }
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            const limit = parseInt(req.query.limit) || 5;
+            const page = parseInt(req.query.page) || 1;
             try {
-                const posts = yield this.postService.getAll();
+                const posts = yield this.postService.getAll(limit, page);
                 if (!posts)
                     return res.status(400).json({ message: 'Não existe postagens disponíveis' });
-                return res.json({ message: 'posts: ', date: posts });
+                return res.json({ message: 'posts: ', posts });
+            }
+            catch (error) {
+                console.log(error);
+                return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
+            }
+        });
+    }
+    getTop(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const posts = yield this.postService.getTop();
+                if (!posts)
+                    return res.status(400).json({ message: 'Não existe postagens disponíveis' });
+                return res.json({ message: 'posts: ', posts });
             }
             catch (error) {
                 console.log(error);

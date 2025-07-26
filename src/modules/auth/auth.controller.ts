@@ -12,14 +12,16 @@ export default class AuthController {
 
     async signup(req: Request, res: Response): Promise<Response<any>> {
         try {
-            const signupAuthDto: SignupAuthDto = req.body;
+            const signupAuthDto: SignupAuthDto = req.body.data;
             const validation = validationSignupSchema.safeParse(signupAuthDto);
+
             if (!validation.success) {
                 return res.status(400).json({
                     message: 'Validation failed',
                     error: validation.error.flatten().fieldErrors
                 })
             }
+
             const user = await this.authService.signup(signupAuthDto);
             return res.status(201).json({ message: 'Usuario registrado!', user });
         } catch (error) {
@@ -33,13 +35,23 @@ export default class AuthController {
     async signin(req: Request, res: Response): Promise<Response<any>> {
         try {
             const result = await this.authService.signin(req.body);
-            console.log(result)
+
+            if (result?.message === 'Usuário não encontrado') {
+                return res.status(404).json({ message: result.error });
+            }
+
+            if (result?.message === 'Senha inválida') {
+                return res.status(401).json({ message: result.error });
+            }
+
             return res.status(200).json(result);
+
         } catch (error) {
-            console.log(error);
-            return res.status(401).json({ message: "Credenciais inválidas" });
+            console.error(error);
+            return res.status(500).json({ message: "Erro interno do servidor" });
         }
     }
+
 
     async generate2FA(req: Request, res: Response): Promise<Response<any>> {
         try {

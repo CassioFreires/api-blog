@@ -36,8 +36,8 @@ export default class AuthRepository {
             return await this.userRepo.findOne({
                 where: { email },
                 select: [
-                    'id', 'name', 'fullName', 'email', 'password_hash',
-                    'twoFactorSecret', 'isTwoFactorEnabled', 'refreshToken'
+                    'id', 'name', 'lastName', 'email', 'password_hash',
+                    'twoFactorSecret', 'isTwoFactorEnabled', 'refreshToken', 'bio', 'avatarUrl' ,'role'
                 ]
             });
         } catch (error) {
@@ -60,7 +60,7 @@ export default class AuthRepository {
                     }
                 },
                 select: [
-                    'id', 'name', 'fullName', 'email', 'password_hash',
+                    'id', 'name', 'lastName', 'email', 'password_hash',
                     'twoFactorSecret', 'isTwoFactorEnabled',
                     'refreshToken', 'role_id'
                 ]

@@ -35,7 +35,7 @@ describe('UserRepository', () => {
         repo.repo = mockTypeOrmRepo;
     });
     it('create() - deve criar e salvar um usuário', () => __awaiter(void 0, void 0, void 0, function* () {
-        const data = { name: 'cassio', fullName: 'Cassio Souza', email: 'cassio@teste.com', password_hash: '123456' };
+        const data = { name: 'cassio', lastName: 'Cassio Souza', email: 'cassio@teste.com', password_hash: '123456' };
         const userEntity = new user_entities_1.default();
         mockTypeOrmRepo.create.mockReturnValue(userEntity);
         mockTypeOrmRepo.save.mockResolvedValue(userEntity);

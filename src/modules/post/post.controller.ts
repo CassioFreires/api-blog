@@ -43,11 +43,25 @@ export default class PostController {
 
     }
 
-    async getAll(req: Request, res: Response): Promise<Response<IPost[] | IReturnResponse>> {
+    async getAll(req: Request, res: Response): Promise<Response<IReturnResponse>> {
+        const limit = parseInt(req.query.limit as string) || 5;
+        const page = parseInt(req.query.page as string)  || 1;
+
         try {
-            const posts = await this.postService.getAll();
+            const posts = await this.postService.getAll(limit, page);
             if (!posts) return res.status(400).json({ message: 'Não existe postagens disponíveis' })
-            return res.json({ message: 'posts: ', date: posts });
+            return res.json({ message: 'posts: ', posts });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
+        }
+    }
+
+    async getTop(req: Request, res: Response): Promise<Response<IPost[] | IReturnResponse>> {
+        try {
+            const posts = await this.postService.getTop();
+            if (!posts) return res.status(400).json({ message: 'Não existe postagens disponíveis' })
+            return res.json({ message: 'posts: ', posts });
         } catch (error) {
             console.log(error);
             return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
