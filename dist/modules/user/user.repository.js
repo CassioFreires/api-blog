@@ -13,17 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
-const ps_config_1 = __importDefault(require("../../config/ps.config"));
-const user_entities_1 = __importDefault(require("./entities/user.entities"));
+const ps_config_1 = __importDefault(require("../../config/ps.config")); // sua instância do knex
 class UserRepository {
     constructor() {
-        this.repo = ps_config_1.default.getRepository(user_entities_1.default);
+        this.tableName = 'users'; // Nome da tabela no banco
     }
     create(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const user = this.repo.create(data); // cria instância com dados do DTO
-                return yield this.repo.save(user); // salva no banco
+                const [user] = yield (0, ps_config_1.default)(this.tableName)
+                    .insert(data)
+                    .returning('*'); // retorna os dados inseridos (Postgres)
+                return user;
             }
             catch (error) {
                 console.error('Erro ao criar usuário no repositório:', error);
@@ -34,9 +35,9 @@ class UserRepository {
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.repo.find({
-                    relations: ['role']
-                });
+                return yield (0, ps_config_1.default)(this.tableName)
+                    .select('*')
+                    .leftJoin('roles', 'users.role_id', 'roles.id'); // exemplo com join
             }
             catch (error) {
                 console.error('Erro ao buscar todos usuários no repositório:', error);
@@ -47,13 +48,14 @@ class UserRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.repo.findOne({
-                    where: { id },
-                    relations: ['role']
-                });
+                const user = yield (0, ps_config_1.default)(this.tableName)
+                    .where({ id })
+                    .leftJoin('roles', 'users.role_id', 'roles.id')
+                    .first();
+                return user !== null && user !== void 0 ? user : null;
             }
             catch (error) {
-                console.error(`Erro ao buscar usuário com id ${id} no repositório:`, error);
+                console.error(`Erro ao buscar usuário com id ${id}:`, error);
                 throw error;
             }
         });
@@ -61,13 +63,14 @@ class UserRepository {
     getByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.repo.findOne({
-                    where: { email },
-                    relations: ['role']
-                });
+                const user = yield (0, ps_config_1.default)(this.tableName)
+                    .where({ email })
+                    .leftJoin('roles', 'users.role_id', 'roles.id')
+                    .first();
+                return user !== null && user !== void 0 ? user : null;
             }
             catch (error) {
-                console.error(`Erro ao buscar usuário email id ${email} no repositório:`, error);
+                console.error(`Erro ao buscar usuário com email ${email}:`, error);
                 throw error;
             }
         });
@@ -75,12 +78,11 @@ class UserRepository {
     update(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.repo.update(id, data);
-                const updatedUser = yield this.getById(id);
-                return updatedUser !== null && updatedUser !== void 0 ? updatedUser : null;
+                yield (0, ps_config_1.default)(this.tableName).where({ id }).update(data);
+                return yield this.getById(id);
             }
             catch (error) {
-                console.error(`Erro ao atualizar usuário com id ${id} no repositório:`, error);
+                console.error(`Erro ao atualizar usuário com id ${id}:`, error);
                 throw error;
             }
         });
@@ -88,10 +90,10 @@ class UserRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.repo.delete(id);
+                yield (0, ps_config_1.default)(this.tableName).where({ id }).del();
             }
             catch (error) {
-                console.error(`Erro ao deletar usuário com id ${id} no repositório:`, error);
+                console.error(`Erro ao deletar usuário com id ${id}:`, error);
                 throw error;
             }
         });

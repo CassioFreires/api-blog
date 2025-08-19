@@ -1,106 +1,132 @@
-import { Repository } from "typeorm";
-import UserEntity from "../user/entities/user.entities";
+import db from "../../config/ps.config";
 import { SignupAuthDto } from "./dto/signup.dto";
-import PsDatabase from "../../config/ps.config";
 
 export default class AuthRepository {
-    private userRepo: Repository<UserEntity>;
+  private table = "users";
 
-    constructor() {
-        this.userRepo = PsDatabase.getRepository(UserEntity);
+  async signup(data: SignupAuthDto) {
+    try {
+      const [insertedId] = await db(this.table).insert(data);
+      const user = await this.findById(insertedId);
+      return user;
+    } catch (error) {
+      console.error("Erro ao criar usuário no repositório:", error);
+      throw new Error("Erro ao salvar usuário no banco de dados.");
     }
+  }
 
-    async signup(data: SignupAuthDto) {
-        try {
-            const user = this.userRepo.create(data);
-            return await this.userRepo.save(user);
-        } catch (error) {
-            console.error('Erro ao criar usuário no repositório:', error);
-            throw new Error('Erro ao salvar usuário no banco de dados.');
-        }
+  async getByEmail(email: string) {
+    if (!email) throw new Error("Email é obrigatório para buscar usuário.");
+
+    try {
+      return await db(this.table).where({ email }).first();
+    } catch (error) {
+      console.error("Erro ao buscar usuário por email:", error);
+      throw new Error("Erro ao buscar usuário por email.");
     }
+  }
 
-    async getByEmail(email: string) {
-        try {
-            if (!email) throw new Error("Email é obrigatório para buscar usuário.");
-            return await this.userRepo.findOne({ where: { email } });
-        } catch (error) {
-            console.error('Erro ao buscar usuário por email:', error);
-            throw new Error('Erro ao buscar usuário por email.');
-        }
+async findByEmailWithPassword(email: string) {
+  if (!email) throw new Error("Email é obrigatório.");
+
+  try {
+    return await db('users')
+      .select(
+        'users.id',
+        'users.name',
+        'users.lastName',
+        'users.email',
+        'users.password_hash',
+        'users.twoFactorSecret',
+        'users.isTwoFactorEnabled',
+        'users.refreshToken',
+        'users.bio',
+        'users.avatarUrl',
+        'users.role_id',
+        'roles.name as role_name',
+        'roles.description as role_description'
+      )
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .where('users.email', email)
+      .first();
+  } catch (error) {
+    console.error('Erro ao buscar usuário com senha:', error);
+    throw new Error('Erro ao buscar usuário com senha.');
+  }
+}
+
+
+  async findById(id: number) {
+    if (!id || typeof id !== "number") throw new Error("ID inválido.");
+
+    try {
+      // Supondo que você tenha tabelas 'roles', 'role_permissions', 'permissions'
+      // Para trazer dados relacionados, faça joins. Exemplo básico:
+      const user = await db(this.table)
+        .select(
+          `${this.table}.*`,
+          "roles.name as role_name",
+          "permissions.name as permission_name"
+        )
+        .leftJoin("roles", `${this.table}.role_id`, "roles.id")
+        .leftJoin(
+          "role_permissions",
+          "roles.id",
+          "role_permissions.role_id"
+        )
+        .leftJoin(
+          "permissions",
+          "role_permissions.permission_id",
+          "permissions.id"
+        )
+        .where(`${this.table}.id`, id)
+        .first();
+
+      return user;
+    } catch (error) {
+      console.error("Erro ao buscar usuário por ID:", error);
+      throw new Error("Erro ao buscar usuário por ID.");
     }
+  }
 
-    async findByEmailWithPassword(email: string) {
-        try {
-            if (!email) throw new Error("Email é obrigatório.");
-            return await this.userRepo.findOne({
-                where: { email },
-                select: [
-                    'id', 'name', 'lastName', 'email', 'password_hash',
-                    'twoFactorSecret', 'isTwoFactorEnabled', 'refreshToken', 'bio', 'avatarUrl' ,'role'
-                ]
-            });
-        } catch (error) {
-            console.error('Erro ao buscar usuário com senha:', error);
-            throw new Error('Erro ao buscar usuário com senha.');
-        }
+  async updateTwoFactorSecret(id: number, secret: string) {
+    if (!id || !secret) throw new Error("ID e segredo são obrigatórios.");
+
+    try {
+      await db(this.table)
+        .where({ id })
+        .update({
+          twoFactorSecret: secret,
+          isTwoFactorEnabled: true,
+          updated_at: db.fn.now(),
+        });
+    } catch (error) {
+      console.error("Erro ao atualizar 2FA:", error);
+      throw new Error("Erro ao atualizar chave 2FA do usuário.");
     }
+  }
 
-    async findById(id: number) {
-        try {
-            if (!id || typeof id !== 'number') throw new Error("ID inválido.");
+  async updateRefreshToken(id: number, refreshToken: string) {
+    if (!id || !refreshToken) throw new Error("ID e refresh token são obrigatórios.");
 
-            return await this.userRepo.findOne({
-                where: { id },
-                relations: {
-                    role: {
-                        rolePermission: {
-                            permission: true
-                        }
-                    }
-                },
-                select: [
-                    'id', 'name', 'lastName', 'email', 'password_hash',
-                    'twoFactorSecret', 'isTwoFactorEnabled',
-                    'refreshToken', 'role_id'
-                ]
-            });
-        } catch (error) {
-            console.error('Erro ao buscar usuário por ID:', error);
-            throw new Error('Erro ao buscar usuário por ID.');
-        }
+    try {
+      await db(this.table)
+        .where({ id })
+        .update({ refreshToken, updated_at: db.fn.now() });
+    } catch (error) {
+      console.error("Erro ao atualizar refresh token:", error);
+      throw new Error("Erro ao atualizar o refresh token do usuário.");
     }
+  }
 
-    async updateTwoFactorSecret(id: number, secret: string) {
-        try {
-            if (!id || !secret) throw new Error("ID e segredo são obrigatórios.");
-            await this.userRepo.update(id, {
-                twoFactorSecret: secret,
-                isTwoFactorEnabled: true
-            });
-        } catch (error) {
-            console.error('Erro ao atualizar 2FA:', error);
-            throw new Error('Erro ao atualizar chave 2FA do usuário.');
-        }
+  async clearRefreshToken(userId: number): Promise<void> {
+    try {
+      await db(this.table)
+        .where({ id: userId })
+        .update({ refreshToken: "", updated_at: db.fn.now() });
+    } catch (error) {
+      console.error("Erro ao limpar o refresh token:", error);
+      throw new Error("Erro ao realizar logout no banco de dados.");
     }
-
-    async updateRefreshToken(id: number, refreshToken: string) {
-        try {
-            if (!id || !refreshToken) throw new Error("ID e refresh token são obrigatórios.");
-            return await this.userRepo.update(id, { refreshToken });
-        } catch (error) {
-            console.error('Erro ao atualizar refresh token:', error);
-            throw new Error('Erro ao atualizar o refresh token do usuário.');
-        }
-    }
-
-     async clearRefreshToken(userId: number): Promise<void> {
-        try {
-            await this.userRepo.update(userId, { refreshToken: '' });
-        } catch (error) {
-            console.error("Erro ao limpar o refresh token:", error);
-            throw new Error("Erro ao realizar logout no banco de dados.");
-        }
-    }
-
+  }
 }

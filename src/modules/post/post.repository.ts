@@ -1,124 +1,174 @@
+import db from "../../config/ps.config";
 import { CreatePostDto } from "./dto/create-post.dto";
-import { PostEntity } from "./entities/post.entities";
-import { DeepPartial, Repository } from "typeorm";
-import PsDatabase from "../../config/ps.config";
-import { IPost } from "./interfaces/post.interface";
-import UserEntity from "../user/entities/user.entities";
-import { IReturnResponse } from "./interfaces/response.interface";
 import { UpdatePostDto } from "./dto/update-post.dto";
+import { IPost } from "./interfaces/post.interface";
+import { IReturnResponse } from "./interfaces/response.interface";
 
 export default class PostRepository {
-    private repo: Repository<PostEntity>
-    private repoUser: Repository<UserEntity>
-    constructor() {
-        this.repo = PsDatabase.getRepository(PostEntity);
-        this.repoUser = PsDatabase.getRepository(UserEntity);
+  private table = "posts";
+  private userTable = "users";
+
+  async create(data: CreatePostDto): Promise<IPost | IReturnResponse> {
+    try {
+      const userExists = await db(this.userTable).where({ id: data.user_id }).first();
+
+      if (!userExists) {
+        return { message: "Usuário informado não existe." };
+      }
+
+      const [post] = await db(this.table)
+        .insert({
+          title: data.title,
+          content: data.content,
+          user_id: data.user_id,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning("*");
+
+      return post;
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
-    async create(data: DeepPartial<PostEntity>): Promise<IPost | IReturnResponse> {
-        try {
-            const userExists = await this.repoUser.findOneBy({ id: data.user?.id })
-            if (!userExists) {
-                return { message: 'Usuário informado não existe.' }
-            }
-            const post = await this.repo.create(data);
-            return this.repo.save(post);
-        } catch (error) {
-            console.log(error)
-            throw error;
-        }
+  async getAll(limit: number, page: number): Promise<IReturnResponse> {
+    try {
+      const offset = (page - 1) * limit;
+
+      const [totalResult] = await db(this.table).count("* as total");
+      const total = Number(totalResult.total);
+
+      const posts = await db(this.table)
+        .select("posts.*", "users.name as user_name", "users.email as user_email")
+        .join("users", "users.id", "posts.user_id")
+        .orderBy([{ column: "createAt", order: "desc" }, { column: "id", order: "desc" }]) // 👈 garante consistência
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        message: "Postagens encontradas com sucesso",
+        pagination: {
+          currentPage: page,
+          totalItems: total,
+          totalPages: Math.ceil(total / limit),
+          perPage: limit,
+          hasNextPage: page < Math.ceil(total / limit),
+          hasPreviousPage: page > 1,
+          nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
+          previousPage: page > 1 ? page - 1 : null
+        },
+        data: posts
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
-    async getAll(limit: number, page: number): Promise<IReturnResponse> {
-        try {
-            const [posts, total] = await this.repo.findAndCount({
-                relations: ['user'],
-                order: {
-                    createAt: 'DESC'
-                },
-                skip: (page - 1) * limit,
-                take: limit
-            });
+  async getTop(): Promise<IReturnResponse> {
+    try {
+      // Pegando todas as categorias
+      const categories = await db('categories').select('id', 'name', 'description');
 
-            return {
-                message: 'Postagens encontradas com sucesso',
-                pagination: {
-                    currentPage: page,
-                    totalItems: total,
-                    totalPages: Math.ceil(total / limit),
-                    perPage: limit,
-                    hasNextPage: page < Math.ceil(total / limit),
-                    hasPreviousPage: page > 1,
-                    nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
-                    previousPage: page > 1 ? page - 1 : null
-                },
-                data: posts
-            };
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
+      // Para cada categoria, pegar a última postagem
+      const postsPromises = categories.map(async (cat) => {
+        const [post] = await db(this.table)
+          .select(
+            "posts.*",
+            "users.name as user_name",
+            "users.email as user_email",
+            "categories.id as category_id",
+            "categories.name as category_name",
+            "categories.description as category_description"
+          )
+          .join('categories', 'posts.category_id', 'categories.id')
+          .join('users', 'users.id', 'posts.user_id')
+          .where('categories.id', cat.id)
+          .orderBy('createAt', 'desc')
+          .limit(1); // só a última postagem de cada categoria
+        return post;
+      });
+
+      const posts = (await Promise.all(postsPromises)).filter(Boolean);
+
+      return {
+        message: "Últimas postagens por categoria encontradas",
+        data: posts
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
 
+  async getById(id: number): Promise<IReturnResponse> {
+    try {
+      const post = await db(this.table)
+        .select("posts.*", "users.name as user_name", "users.email as user_email")
+        .join("users", "users.id", "posts.user_id")
+        .where("posts.id", id)
+        .first();
 
-    async getTop(): Promise<IPost[] | IReturnResponse> {
-        try {
-            const posts = await this.repo.find({
-                relations: ['user'],
-                order: {
-                    createAt: 'DESC'
-                },
-                take: 3
-            });
-            return {
-                message: 'Postagens encontradas com sucesso',
-                data: posts,
-            };
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
+      if (!post) {
+        return { message: "Post não encontrado" };
+      }
+
+      return {
+        message: "Postagem encontrada com sucesso",
+        data: post
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
 
-    async getById(id: number): Promise<IPost | IReturnResponse> {
-        try {
-            const post = await this.repo.findOne({
-                where: { id },
-                relations: ['user']
-            });
-            if (!post) {
-                return { message: 'Post não encontrado' };
-            }
-            return {
-                message: 'Postagens encontradas com sucesso',
-                data: post,
-            };
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
-    }
+  async update(id: number, updatePostDto: UpdatePostDto): Promise<IPost | IReturnResponse | null> {
+    try {
+      await db(this.table)
+        .where({ id })
+        .update({ ...updatePostDto, updated_at: new Date() });
 
-    async update(id: number, updatePostDto: UpdatePostDto): Promise<IPost | IReturnResponse | null> {
-        try {
-            await this.repo.update(id, updatePostDto);
-            const updatePost = await this.repo.findOne({ where: { id } });
-            return updatePost;
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
-    }
+      const updatedPost = await db(this.table)
+        .where({ id })
+        .first();
 
-    async delete(id: number): Promise<IPost | IReturnResponse | null> {
-        try {
-            const resultPost = await this.repo.findOne({ where: { id } });
-            await this.repo.delete(id);
-            return resultPost;
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
+      return updatedPost ?? null;
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
+  }
+
+  async delete(id: number): Promise<IPost | IReturnResponse | null> {
+    try {
+      const post = await db(this.table).where({ id }).first();
+      await db(this.table).where({ id }).del();
+      return post ?? null;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async getAllPostsByCategory(slug: string): Promise<IPost[]> {
+    if (!slug) return [];
+
+    try {
+      const posts = await db(this.table)
+        .join('categories', 'posts.category_id', 'categories.id')
+        .where('categories.slug', 'ilike', slug)
+        .orderBy('createAt', 'desc')
+        .select('posts.*');
+
+      return posts;
+    } catch (error) {
+      console.error('Erro ao buscar posts por categoria:', error);
+      throw error;
+    }
+  }
+
 }

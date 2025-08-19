@@ -13,39 +13,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ps_config_1 = __importDefault(require("../../config/ps.config"));
-const comment_entities_1 = require("./entities/comment.entities");
-const user_entities_1 = __importDefault(require("../user/entities/user.entities"));
-const post_entities_1 = require("../post/entities/post.entities");
 class CommentRepository {
     constructor() {
-        this.repo = ps_config_1.default.getRepository(comment_entities_1.CommentEntity);
-        this.repoUser = ps_config_1.default.getRepository(user_entities_1.default);
-        this.repoPost = ps_config_1.default.getRepository(post_entities_1.PostEntity);
+        this.table = "comments";
     }
     create(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const userRepo = ps_config_1.default.getRepository(user_entities_1.default);
-                const postRepo = ps_config_1.default.getRepository(post_entities_1.PostEntity);
-                const user = yield userRepo.findOneBy({ id: data.user_id });
-                const post = yield postRepo.findOneBy({ id: data.post_id });
+                const user = yield (0, ps_config_1.default)("users").where({ id: data.user_id }).first();
+                const post = yield (0, ps_config_1.default)("posts").where({ id: data.post_id }).first();
                 if (!user || !post) {
                     return {
                         data: null,
                         message: "Usuário ou Post não encontrados",
-                        error: "IDs inválidos"
+                        error: "IDs inválidos",
                     };
                 }
-                const comment = this.repo.create({
+                const [insertedId] = yield (0, ps_config_1.default)(this.table).insert({
                     content: data.content,
-                    user,
-                    post,
+                    user_id: data.user_id,
+                    post_id: data.post_id,
+                    created_at: new Date(),
+                    updated_at: new Date(),
                 });
-                yield this.repo.save(comment);
-                return { message: 'Comentário criado com sucesso', data: comment };
+                const comment = yield (0, ps_config_1.default)(this.table)
+                    .select("comments.*", "users.id as user_id", "users.name as user_name", "posts.id as post_id", "posts.title as post_title")
+                    .leftJoin("users", "comments.user_id", "users.id")
+                    .leftJoin("posts", "comments.post_id", "posts.id")
+                    .where("comments.id", insertedId)
+                    .first();
+                return {
+                    message: "Comentário criado com sucesso",
+                    data: comment,
+                };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao criar comentário:", error);
                 throw error;
             }
         });
@@ -53,26 +56,24 @@ class CommentRepository {
     getAllCommentsByPost(post_id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const comments = yield this.repo.find({
-                    where: {
-                        post: { id: post_id }
-                    },
-                    relations: ['user', 'post']
-                });
-                console.log(comments);
-                if (!comments) {
+                const comments = yield (0, ps_config_1.default)(this.table)
+                    .select("comments.*", "users.id as user_id", "users.name as user_name", "posts.id as post_id", "posts.title as post_title")
+                    .leftJoin("users", "comments.user_id", "users.id")
+                    .leftJoin("posts", "comments.post_id", "posts.id")
+                    .where("comments.post_id", post_id);
+                if (comments.length === 0) {
                     return {
-                        message: 'Nenhum comentário encontrado para este post.',
-                        data: null
+                        message: "Nenhum comentário encontrado para este post.",
+                        data: [],
                     };
                 }
                 return {
-                    message: 'Todos os comentários do post com usuários e post',
-                    data: comments
+                    message: "Todos os comentários do post com usuários e post",
+                    data: comments,
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao buscar comentários por post:", error);
                 throw error;
             }
         });
@@ -80,16 +81,17 @@ class CommentRepository {
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const results = yield this.repo.find({
-                    relations: ['post', 'user']
-                });
+                const results = yield (0, ps_config_1.default)(this.table)
+                    .select("comments.*", "users.id as user_id", "users.name as user_name", "posts.id as post_id", "posts.title as post_title")
+                    .leftJoin("users", "comments.user_id", "users.id")
+                    .leftJoin("posts", "comments.post_id", "posts.id");
                 return {
-                    message: 'Todos os comentarios',
-                    data: results
+                    message: "Todos os comentários",
+                    data: results,
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao buscar todos os comentários:", error);
                 throw error;
             }
         });
@@ -97,21 +99,25 @@ class CommentRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const comment = yield this.repo.findOne({
-                    where: { id: id },
-                    relations: ['user', 'post']
-                });
+                const comment = yield (0, ps_config_1.default)(this.table)
+                    .select("comments.*", "users.id as user_id", "users.name as user_name", "posts.id as post_id", "posts.title as post_title")
+                    .leftJoin("users", "comments.user_id", "users.id")
+                    .leftJoin("posts", "comments.post_id", "posts.id")
+                    .where("comments.id", id)
+                    .first();
                 if (!comment) {
                     return {
-                        message: 'Não foi localizado comentario com "ID" passado por parametro',
+                        message: 'Não foi localizado comentário com "ID" passado por parâmetro',
                         data: null,
                     };
                 }
-                ;
-                return { message: 'Comentario localizado', data: comment };
+                return {
+                    message: "Comentário localizado",
+                    data: comment,
+                };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao buscar comentário por ID:", error);
                 throw error;
             }
         });
@@ -119,28 +125,27 @@ class CommentRepository {
     update(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const comment = yield this.repo.findOne({
-                    where: { id },
-                    relations: ['user', 'post']
-                });
+                const comment = yield (0, ps_config_1.default)(this.table).where({ id }).first();
                 if (!comment) {
                     return {
-                        message: 'Comentário não encontrado',
-                        data: null
+                        message: "Comentário não encontrado",
+                        data: null,
                     };
                 }
-                yield this.repo.update(id, data);
-                const updated = yield this.repo.findOne({
-                    where: { id },
-                    relations: ['user', 'post']
+                yield (0, ps_config_1.default)(this.table)
+                    .where({ id })
+                    .update({
+                    content: data.content,
+                    updated_at: new Date(),
                 });
+                const updated = yield this.getById(id);
                 return {
-                    message: 'Comentário atualizado com sucesso',
-                    data: updated
+                    message: "Comentário atualizado com sucesso",
+                    data: updated.data,
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao atualizar comentário:", error);
                 throw error;
             }
         });
@@ -148,21 +153,21 @@ class CommentRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const comment = yield this.repo.findOneBy({ id });
+                const comment = yield (0, ps_config_1.default)(this.table).where({ id }).first();
                 if (!comment) {
                     return {
-                        message: 'Comentário não encontrado',
-                        data: null
+                        message: "Comentário não encontrado",
+                        data: null,
                     };
                 }
-                yield this.repo.delete(id);
+                yield (0, ps_config_1.default)(this.table).where({ id }).del();
                 return {
-                    message: 'Comentário deletado com sucesso',
-                    data: null
+                    message: "Comentário deletado com sucesso",
+                    data: null,
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error("Erro ao deletar comentário:", error);
                 throw error;
             }
         });

@@ -137,5 +137,29 @@ class PostController {
             }
         });
     }
+    getAllPostsByCategory(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { slug } = req.params;
+            if (!slug || slug.trim() === '') {
+                return res.status(400).json({ message: 'Slug da categoria é obrigatório' });
+            }
+            try {
+                const posts = yield this.postService.getAllPostsByCategory(slug);
+                if (!posts || posts.length === 0) {
+                    return res.status(404).json({ message: 'Não existem postagens disponíveis para esta categoria' });
+                }
+                return res.json({ message: 'Posts encontrados', posts });
+            }
+            catch (error) {
+                // Captura o erro de tipo inválido do PostgreSQL
+                if (error.code === '22P02') {
+                    console.error('Erro de tipo inválido: parâmetro não numérico enviado para integer.');
+                    return res.status(400).json({ message: 'Parâmetro inválido enviado para a query' });
+                }
+                console.error(error);
+                return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
+            }
+        });
+    }
 }
 exports.default = PostController;

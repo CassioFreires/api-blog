@@ -4,8 +4,7 @@ import AuthService from "./auth.service";
 import { validationSignupSchema } from "./schema/validation-signup.schema";
 import { validation2FAGenerationSchema } from "./schema/validation-2faGenerate.schema";
 import { validation2FAverifySchema } from "./schema/validation-2faVerify.schema";
-import { IUser } from "../user/interfaces/user.interface";
-
+import jwt from 'jsonwebtoken';
 
 export default class AuthController {
     constructor(private readonly authService: AuthService) { }
@@ -32,23 +31,35 @@ export default class AuthController {
         }
     }
 
-    async signin(req: Request, res: Response): Promise<Response<any>> {
+    async signin(req: Request, res: Response): Promise<Response> {
         try {
             const result = await this.authService.signin(req.body);
 
+            // Verificações específicas por mensagem de erro
             if (result?.message === 'Usuário não encontrado') {
-                return res.status(404).json({ message: result.error });
+                return res.status(404).json({ message: 'Usuário não encontrado' });
             }
 
             if (result?.message === 'Senha inválida') {
-                return res.status(401).json({ message: result.error });
+                return res.status(401).json({ message: 'Senha inválida' });
             }
 
-            return res.status(200).json(result);
+            const privateKey = String(process.env.JWT_PRIVATE_ACCESS_TOKEN_KEY);
+            const token = jwt.sign(result, privateKey, {expiresIn: '1d'});
+            
+            // Sucesso: retorna token e usuário
+            return res.status(200).json({
+                token,
+                result
+            });
 
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: "Erro interno do servidor" });
+        } catch (error: any) {
+            console.error('[ERRO - SIGNIN]', error);
+
+            // Verifica se o erro tem uma mensagem específica
+            const message = error?.message || 'Erro interno do servidor';
+
+            return res.status(500).json({ message });
         }
     }
 

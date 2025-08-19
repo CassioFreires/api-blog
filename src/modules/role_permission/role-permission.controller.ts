@@ -39,7 +39,6 @@ export class RolePermissionController {
     async getAll(req: Request, res: Response): Promise<Response<IRolePermission>> {
         try {
             const rolePermissions = await this.rolePermissionService.getAll();
-            console.log(rolePermissions)
             if (!rolePermissions || rolePermissions.length === 0) {
                 return res.status(404).json({ message: 'No role permissions found' });
             }

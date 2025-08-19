@@ -4,7 +4,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --watch src --ext ts --exec \"tsc && node dist/server.js\""
+    "dev": "nodemon --watch src --ext ts --exec \"tsc && node dist/server.js\"",
+    "migrate:dev": "knex migrate:latest --env development",
+    "migrate:hml": "knex migrate:latest --env hml",
+    "migrate:prod": "knex migrate:latest --env production",
+    "rollback:dev": "knex migrate:rollback --env development",
+    "rollback:hml": "knex migrate:rollback --env hml",
+    "rollback:prod": "knex migrate:rollback --env production",
+    "seed:dev": "knex seed:run --env development",
+    "seed:hml": "knex seed:run --env hml",
+    "seed:prod": "knex seed:run --env production"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +25,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
     "pg": "^8.16.0",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",

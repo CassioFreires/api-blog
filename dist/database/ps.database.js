@@ -12,17 +12,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectPostegres = connectPostegres;
+exports.testConnection = testConnection;
 const ps_config_1 = __importDefault(require("../config/ps.config"));
-function connectPostegres() {
+function testConnection() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield ps_config_1.default.initialize()
-            .then(() => {
-            console.log('📦 Banco de dados "Postgres" conectado com sucesso');
-        })
-            .catch((error) => {
-            console.error('🔴 Erro ao conectar no Postgresql', error);
-            throw new Error('Erro ao conectar no Postgresql');
-        });
+        try {
+            yield ps_config_1.default.raw('SELECT 1+1 AS result');
+            console.log('✅ Banco de dados conectado com sucesso.');
+        }
+        catch (error) {
+            console.error('❌ Erro ao conectar ao banco de dados:', error);
+            process.exit(1); // Encerra a aplicação
+        }
     });
 }

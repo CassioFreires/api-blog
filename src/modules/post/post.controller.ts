@@ -45,7 +45,7 @@ export default class PostController {
 
     async getAll(req: Request, res: Response): Promise<Response<IReturnResponse>> {
         const limit = parseInt(req.query.limit as string) || 5;
-        const page = parseInt(req.query.page as string)  || 1;
+        const page = parseInt(req.query.page as string) || 1;
 
         try {
             const posts = await this.postService.getAll(limit, page);
@@ -118,15 +118,40 @@ export default class PostController {
         try {
             const id = Number(req.params.id);
             const resultPost = await this.postService.getById(id);
-            if(!resultPost) return res.status(400).json({message: 'Não existe postagem com o "ID" passado por parâmetro.'});
+            if (!resultPost) return res.status(400).json({ message: 'Não existe postagem com o "ID" passado por parâmetro.' });
 
             const post = await this.postService.delete(id);
-            return res.json({message: 'Postagem deletada com sucesso', post});
-            
+            return res.json({ message: 'Postagem deletada com sucesso', post });
+
         } catch (error) {
             console.log(error);
             throw error;
         }
     }
 
+    async getAllPostsByCategory(req: Request, res: Response): Promise<Response> {
+        const { slug } = req.params;
+
+        if (!slug || slug.trim() === '') {
+            return res.status(400).json({ message: 'Slug da categoria é obrigatório' });
+        }
+        try {
+            const posts = await this.postService.getAllPostsByCategory(slug);
+
+            if (!posts || posts.length === 0) {
+                return res.status(404).json({ message: 'Não existem postagens disponíveis para esta categoria' });
+            }
+
+            return res.json({ message: 'Posts encontrados', posts });
+        } catch (error: any) {
+            // Captura o erro de tipo inválido do PostgreSQL
+            if (error.code === '22P02') {
+                console.error('Erro de tipo inválido: parâmetro não numérico enviado para integer.');
+                return res.status(400).json({ message: 'Parâmetro inválido enviado para a query' });
+            }
+
+            console.error(error);
+            return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
+        }
+    }
 }

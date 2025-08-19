@@ -13,51 +13,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RolePermissionRepository = void 0;
-const create_role_permission_1 = require("./entities/create-role-permission");
-const ps_config_1 = __importDefault(require("../../config/ps.config"));
-const role_entities_1 = require("../role/entities/role.entities");
-const permission_entitie_1 = require("../permission/entities/permission.entitie");
+const ps_config_1 = __importDefault(require("../../config/ps.config")); // instância do Knex
 class RolePermissionRepository {
     constructor() {
-        this.repo = ps_config_1.default.getRepository(create_role_permission_1.RolePermissionEntity);
-        this.repoRole = ps_config_1.default.getRepository(role_entities_1.RoleEntity);
-        this.repoPermission = ps_config_1.default.getRepository(permission_entitie_1.PermissionEntity);
+        this.table = "role_permissions";
+        this.roleTable = "roles";
+        this.permissionTable = "permissions";
     }
     create(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { role_id, permission_id } = data;
+                const ids = Array.isArray(permission_id) ? permission_id : [permission_id];
                 // Verifica se a role existe
-                const roleExists = yield this.repoRole.findOneBy({ id: role_id });
+                const roleExists = yield (0, ps_config_1.default)(this.roleTable).where({ id: role_id }).first();
                 if (!roleExists) {
-                    console.error(`Role com id ${role_id} não encontrado.`);
+                    console.error(`Role com id ${role_id} não encontrada.`);
                     return null;
                 }
-                const ids = Array.isArray(permission_id) ? permission_id : [permission_id];
-                // Verifica se as permissões existem
-                const foundPermissions = yield this.repoPermission.findByIds(ids);
-                console.log(foundPermissions);
+                // Verifica se as permissions existem
+                const foundPermissions = yield (0, ps_config_1.default)(this.permissionTable)
+                    .whereIn("id", ids)
+                    .select("id");
                 const foundIds = foundPermissions.map(p => p.id);
                 const notFound = ids.filter(id => !foundIds.includes(id));
                 if (notFound.length > 0) {
-                    console.error(`Permissions não encontradas: ${notFound.join(', ')}`);
+                    console.error(`Permissions não encontradas: ${notFound.join(", ")}`);
                     return null;
                 }
-                const entries = ids.map((pid) => {
-                    const entity = new create_role_permission_1.RolePermissionEntity();
-                    entity.role_id = role_id;
-                    entity.permission_id = pid;
-                    return entity;
-                });
-                return yield this.repo.save(entries);
+                // Cria as associações role-permission
+                const entries = ids.map(pid => ({
+                    role_id,
+                    permission_id: pid,
+                }));
+                const inserted = yield (0, ps_config_1.default)(this.table)
+                    .insert(entries)
+                    .returning("*");
+                return inserted;
             }
             catch (error) {
-                if (error instanceof Error) {
-                    console.error('Erro ao criar role permission no repositório:', error.message);
-                }
-                else {
-                    console.error('Erro desconhecido ao criar role permission:', error);
-                }
+                console.error("Erro ao criar role_permission:", error);
                 return null;
             }
         });
@@ -65,10 +60,10 @@ class RolePermissionRepository {
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.repo.find();
+                return yield (0, ps_config_1.default)(this.table).select("*");
             }
             catch (error) {
-                console.error('Erro ao buscar todos roles no repositório:', error);
+                console.error("Erro ao buscar todas as role_permissions:", error);
                 throw error;
             }
         });
@@ -76,10 +71,11 @@ class RolePermissionRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.repo.findOneBy({ id });
+                const result = yield (0, ps_config_1.default)(this.table).where({ id }).first();
+                return result !== null && result !== void 0 ? result : null;
             }
             catch (error) {
-                console.error(`Erro ao buscar role permission com id ${id} no repositório:`, error);
+                console.error(`Erro ao buscar role_permission com id ${id}:`, error);
                 throw error;
             }
         });
@@ -89,19 +85,22 @@ class RolePermissionRepository {
             try {
                 const { role_id, permission_id } = data;
                 if (!permission_id || !Array.isArray(permission_id) || permission_id.length === 0) {
-                    throw new Error('Permissões não fornecidas para atualização.');
+                    throw new Error("Permissões não fornecidas para atualização.");
                 }
-                yield this.repo.delete({ role_id });
-                const newPermissions = permission_id.map(pid => {
-                    const entity = new create_role_permission_1.RolePermissionEntity();
-                    entity.role_id = role_id;
-                    entity.permission_id = pid;
-                    return entity;
-                });
-                return yield this.repo.save(newPermissions);
+                // Remove todas as permissões existentes para a role
+                yield (0, ps_config_1.default)(this.table).where({ role_id }).delete();
+                // Insere as novas permissões
+                const newPermissions = permission_id.map(pid => ({
+                    role_id,
+                    permission_id: pid,
+                }));
+                const inserted = yield (0, ps_config_1.default)(this.table)
+                    .insert(newPermissions)
+                    .returning("*");
+                return inserted;
             }
             catch (error) {
-                console.error(`Erro ao atualizar role permission para role_id ${data.role_id}:`, error);
+                console.error(`Erro ao atualizar role_permission para role_id ${data.role_id}:`, error);
                 throw error;
             }
         });
@@ -109,10 +108,10 @@ class RolePermissionRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.repo.delete(id);
+                yield (0, ps_config_1.default)(this.table).where({ id }).delete();
             }
             catch (error) {
-                console.error(`Erro ao deletar role permission com id ${id} no repositório:`, error);
+                console.error(`Erro ao deletar role_permission com id ${id}:`, error);
                 throw error;
             }
         });
