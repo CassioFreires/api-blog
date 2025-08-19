@@ -1,93 +1,96 @@
-// like.repository.ts
-import { Repository } from "typeorm";
+import db from "../../config/ps.config";
 import { CreateLikeDto } from "./dto/create-like.dto";
-import { LikeEntity } from "./entities/like.entities";
-import UserEntity from "../user/entities/user.entities";
-import PsDatabase from "../../config/ps.config";
-import { PostEntity } from "../post/entities/post.entities";
 import { IReturnResponse } from "./interfaces/response.interface";
 import { ILike } from "./interfaces/like.interface";
 
 export default class LikeRepository {
-  private repo: Repository<LikeEntity> = PsDatabase.getRepository(LikeEntity);
+  private table = "likes";
 
   async toggle(data: CreateLikeDto): Promise<boolean> {
     const { user_id, post_id } = data;
 
-    const existing = await this.repo.findOne({
-      where: {
-        user: { id: user_id },
-        post: { id: post_id },
-      },
-      relations: ["user", "post"],
-    });
+    try {
+      const existing = await db(this.table)
+        .where({ user_id, post_id })
+        .first();
 
-    if (existing) {
-      await this.repo.remove(existing);
-      return false; // Descurtido
+      if (existing) {
+        await db(this.table)
+          .where({ user_id, post_id })
+          .del();
+        return false; // Descurtido
+      }
+
+      await db(this.table).insert({
+        user_id,
+        post_id,
+        created_at: new Date(),
+      });
+      return true; // Curtido
+    } catch (error) {
+      console.error("Erro no toggle de like:", error);
+      throw error;
     }
-
-    const like = this.repo.create({
-      user: { id: user_id } as UserEntity,
-      post: { id: post_id } as PostEntity,
-    });
-
-    await this.repo.save(like);
-    return true; // Curtido
   }
 
   async countByPost(post_id: number): Promise<number> {
-    return await this.repo.count({
-      where: {
-        post: { id: post_id },
-      },
-    });
+    try {
+      const [{ count }] = await db(this.table)
+        .where({ post_id })
+        .count<{ count: string }>("id as count") as any;
+
+      return Number(count);
+    } catch (error) {
+      console.error("Erro ao contar likes por post:", error);
+      throw error;
+    }
   }
 
   async getAll(): Promise<IReturnResponse<ILike[]>> {
     try {
-      const result = await this.repo.find({
-        relations: ['user', 'post']
-      });
+      const result = await db(this.table)
+        .select("*")
+        // Se quiser trazer dados de user e post, precisa de join com as tabelas:
+        .leftJoin("users", "likes.user_id", "users.id")
+        .leftJoin("posts", "likes.post_id", "posts.id");
 
       return {
         data: result,
-        message: 'Likes encontrados com sucesso',
+        message: "Likes encontrados com sucesso",
       };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         error,
-        message: 'Erro ao buscar likes',
+        message: "Erro ao buscar likes",
       };
     }
   }
 
-  async getById(id: number): Promise<IReturnResponse<ILike>> {
+  async getById(id: number): Promise<IReturnResponse<ILike | null>> {
     try {
-      const result = await this.repo.findOne({
-        where: { id: id },
-        relations: ['user', 'post']
-      });
+      const result = await db(this.table)
+        .where({ id })
+        .first();
+
       return {
-        data: result,
-        message: 'Likes encontrados com sucesso',
+        data: result ?? null,
+        message: "Like encontrado com sucesso",
       };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         error,
-        message: 'Erro ao buscar likes',
+        message: "Erro ao buscar like",
       };
     }
   }
 
-  async delete(id: number): Promise<void | any> {
+  async delete(id: number): Promise<void> {
     try {
-      const remove = await this.repo.delete({ id: id });
-      return remove;
+      await db(this.table).where({ id }).del();
     } catch (error) {
-      console.log(error);
+      console.error(`Erro ao deletar like com id ${id}:`, error);
       throw error;
     }
   }

@@ -17,7 +17,7 @@ const ps_database_1 = require("./database/ps.database");
 function start() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield (0, ps_database_1.connectPostegres)();
+            yield (0, ps_database_1.testConnection)();
             app_1.default.listen(3000, () => {
                 console.log('Servidor rodando na porta: 3000');
             });

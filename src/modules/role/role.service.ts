@@ -1,7 +1,7 @@
 // src/modules/user/services/user.service.ts
 import { CreateRoleDTO } from './schema/create-role.schema';
 import { UpdateRoleDto } from './dto/update-role';
-import { IRole } from './interfaces/Role.interface';
+import { IRole } from './interfaces/role.interface';
 import { RoleRepository } from './role.repository';
 
 export class RoleService {

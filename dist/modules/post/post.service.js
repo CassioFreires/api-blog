@@ -21,10 +21,10 @@ class PostService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const newData = {
-                    title: data.title.toLocaleLowerCase(),
-                    subtitle: data.subtitle.toLocaleLowerCase(),
-                    content: data.content.toLocaleLowerCase(),
-                    user: { id: data.user_id }
+                    title: data.title.toLowerCase(),
+                    subtitle: data.subtitle.toLowerCase(),
+                    content: data.content.toLowerCase(),
+                    user_id: Number(data.user_id)
                 };
                 const post = yield this.postRepository.create(newData);
                 return post;
@@ -98,6 +98,21 @@ class PostService {
             catch (error) {
                 console.log(error);
                 throw error;
+            }
+        });
+    }
+    getAllPostsByCategory(slug) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!slug || slug.trim() === '')
+                return [];
+            console.log('aqio', slug);
+            try {
+                const posts = yield this.postRepository.getAllPostsByCategory(slug);
+                return posts.length > 0 ? posts : null;
+            }
+            catch (error) {
+                console.error(error);
+                throw error; // propaga para o controller
             }
         });
     }

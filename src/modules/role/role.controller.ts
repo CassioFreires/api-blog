@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CreateRole } from './dto/create-role';
 import { createRoleSchema } from './schema/create-role.schema';
-import { IRole } from './interfaces/Role.interface';
+import { IRole } from './interfaces/role.interface';
 import { RoleService } from './role.service';
 import { UpdateRoleDto } from './dto/update-role';
 

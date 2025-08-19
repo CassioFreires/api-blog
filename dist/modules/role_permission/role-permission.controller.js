@@ -45,7 +45,6 @@ class RolePermissionController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const rolePermissions = yield this.rolePermissionService.getAll();
-                console.log(rolePermissions);
                 if (!rolePermissions || rolePermissions.length === 0) {
                     return res.status(404).json({ message: 'No role permissions found' });
                 }

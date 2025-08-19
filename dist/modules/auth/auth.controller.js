@@ -8,10 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const validation_signup_schema_1 = require("./schema/validation-signup.schema");
 const validation_2faGenerate_schema_1 = require("./schema/validation-2faGenerate.schema");
 const validation_2faVerify_schema_1 = require("./schema/validation-2faVerify.schema");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -42,17 +46,26 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const result = yield this.authService.signin(req.body);
+                // Verificações específicas por mensagem de erro
                 if ((result === null || result === void 0 ? void 0 : result.message) === 'Usuário não encontrado') {
-                    return res.status(404).json({ message: result.error });
+                    return res.status(404).json({ message: 'Usuário não encontrado' });
                 }
                 if ((result === null || result === void 0 ? void 0 : result.message) === 'Senha inválida') {
-                    return res.status(401).json({ message: result.error });
+                    return res.status(401).json({ message: 'Senha inválida' });
                 }
-                return res.status(200).json(result);
+                const privateKey = String(process.env.JWT_PRIVATE_ACCESS_TOKEN_KEY);
+                const token = jsonwebtoken_1.default.sign(result, privateKey, { expiresIn: '1d' });
+                // Sucesso: retorna token e usuário
+                return res.status(200).json({
+                    token,
+                    result
+                });
             }
             catch (error) {
-                console.error(error);
-                return res.status(500).json({ message: "Erro interno do servidor" });
+                console.error('[ERRO - SIGNIN]', error);
+                // Verifica se o erro tem uma mensagem específica
+                const message = (error === null || error === void 0 ? void 0 : error.message) || 'Erro interno do servidor';
+                return res.status(500).json({ message });
             }
         });
     }

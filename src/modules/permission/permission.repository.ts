@@ -1,82 +1,96 @@
-import { PermissionEntity } from "./entities/permission.entitie";
+import db from "../../config/ps.config";
 import { CreatePermission } from "./dto/create-permission.dto";
 import { UpdatePermission } from "./dto/update-permission.dto";
-import PsDatabase from "../../config/ps.config";
-import { Repository } from "typeorm";
 import { IPermission } from "./interfaces/permission.interface";
 
 export class PermissionRepository {
-  private repo: Repository<PermissionEntity>;
-
-  constructor() {
-    this.repo = PsDatabase.getRepository(PermissionEntity);
-  }
+  private table = "permissions";
 
   async create(data: CreatePermission): Promise<IPermission> {
     try {
-      const permission = this.repo.create(data); // cria instância com dados do DTO
-      return await this.repo.save(permission);   // salva no banco
+      const [permission] = await db(this.table)
+        .insert({
+          name: data.name,
+          description: data.description,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning("*");
+
+      return permission;
     } catch (error) {
-      console.error('Erro ao criar permission no repositório:', error);
+      console.error("Erro ao criar permission no repositório:", error);
       throw error;
     }
   }
 
   async getAll(): Promise<IPermission[]> {
     try {
-      return await this.repo.find();
+      return await db(this.table).select("*");
     } catch (error) {
-      console.error('Erro ao buscar todos permission no repositório:', error);
+      console.error("Erro ao buscar todas permissões no repositório:", error);
       throw error;
     }
   }
 
   async getById(id: number): Promise<IPermission | null> {
     try {
-      return await this.repo.findOneBy({ id });
+      const permission = await db(this.table)
+        .where({ id })
+        .first();
+
+      return permission ?? null;
     } catch (error) {
-      console.error(`Erro ao buscar permission com id ${id} no repositório:`, error);
+      console.error(`Erro ao buscar permission com id ${id}:`, error);
       throw error;
     }
   }
 
   async getByName(name: string): Promise<IPermission | null> {
     try {
-      return await this.repo.findOneBy({ name });
+      const permission = await db(this.table)
+        .where({ name })
+        .first();
+
+      return permission ?? null;
     } catch (error) {
-      console.error(`Erro ao buscar permission name id ${name} no repositório:`, error);
+      console.error(`Erro ao buscar permission com name ${name}:`, error);
       throw error;
     }
   }
 
   async update(id: number, data: UpdatePermission): Promise<IPermission | null> {
     try {
-      await this.repo.update(id, data);
-      const updatePermission = await this.getById(id);
-      return updatePermission ?? null;
+      await db(this.table)
+        .where({ id })
+        .update({
+          ...data,
+          updated_at: new Date()
+        });
+
+      const updatedPermission = await this.getById(id);
+      return updatedPermission;
     } catch (error) {
-      console.error(`Erro ao atualizar permission com id ${id} no repositório:`, error);
+      console.error(`Erro ao atualizar permission com id ${id}:`, error);
       throw error;
     }
   }
 
   async delete(id: number): Promise<void> {
     try {
-      await this.repo.delete(id);
+      await db(this.table).where({ id }).del();
     } catch (error) {
-      console.error(`Erro ao deletar permission com id ${id} no repositório:`, error);
+      console.error(`Erro ao deletar permission com id ${id}:`, error);
       throw error;
     }
   }
-
 
   async findByIds(ids: number[]): Promise<IPermission[]> {
     try {
-      return await this.repo.findByIds(ids);
+      return await db(this.table).whereIn("id", ids);
     } catch (error) {
-      console.error('Erro ao buscar permissões pelos IDs:', error);
+      console.error("Erro ao buscar permissões pelos IDs:", error);
       throw error;
     }
   }
-
 }

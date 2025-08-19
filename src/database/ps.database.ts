@@ -1,12 +1,11 @@
-import PsDatabase from "../config/ps.config";
+import db from "../config/ps.config";
 
-export async function connectPostegres() {
-    await PsDatabase.initialize()
-        .then(() => {
-            console.log('📦 Banco de dados "Postgres" conectado com sucesso');
-        })
-        .catch((error) => {
-            console.error('🔴 Erro ao conectar no Postgresql', error);
-            throw new Error('Erro ao conectar no Postgresql');
-        })
+export async function testConnection() {
+  try {
+    await db.raw('SELECT 1+1 AS result');
+    console.log('✅ Banco de dados conectado com sucesso.');
+  } catch (error) {
+    console.error('❌ Erro ao conectar ao banco de dados:', error);
+    process.exit(1); // Encerra a aplicação
+  }
 }

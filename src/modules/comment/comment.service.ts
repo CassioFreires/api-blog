@@ -38,7 +38,7 @@ export default class CommentService {
         }
     }
 
-    async getById(id: number): Promise<IReturnResponse<IComments>> {
+    async getById(id: number): Promise<IReturnResponse<IComments | null>> {
         try {
             const comment = await this.commentRepository.getById(id);
             return comment;
@@ -48,7 +48,7 @@ export default class CommentService {
         }
     }
 
-    async update(id: number, data: UpdateCommentDto): Promise<IReturnResponse<IComments>> {
+    async update(id: number, data: UpdateCommentDto): Promise<IReturnResponse<IComments | null>> {
         try {
             const updatedComment = await this.commentRepository.update(id, data);
             return updatedComment;

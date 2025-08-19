@@ -12,59 +12,69 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const like_entities_1 = require("./entities/like.entities");
 const ps_config_1 = __importDefault(require("../../config/ps.config"));
 class LikeRepository {
     constructor() {
-        this.repo = ps_config_1.default.getRepository(like_entities_1.LikeEntity);
+        this.table = "likes";
     }
     toggle(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, post_id } = data;
-            const existing = yield this.repo.findOne({
-                where: {
-                    user: { id: user_id },
-                    post: { id: post_id },
-                },
-                relations: ["user", "post"],
-            });
-            if (existing) {
-                yield this.repo.remove(existing);
-                return false; // Descurtido
+            try {
+                const existing = yield (0, ps_config_1.default)(this.table)
+                    .where({ user_id, post_id })
+                    .first();
+                if (existing) {
+                    yield (0, ps_config_1.default)(this.table)
+                        .where({ user_id, post_id })
+                        .del();
+                    return false; // Descurtido
+                }
+                yield (0, ps_config_1.default)(this.table).insert({
+                    user_id,
+                    post_id,
+                    created_at: new Date(),
+                });
+                return true; // Curtido
             }
-            const like = this.repo.create({
-                user: { id: user_id },
-                post: { id: post_id },
-            });
-            yield this.repo.save(like);
-            return true; // Curtido
+            catch (error) {
+                console.error("Erro no toggle de like:", error);
+                throw error;
+            }
         });
     }
     countByPost(post_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.repo.count({
-                where: {
-                    post: { id: post_id },
-                },
-            });
+            try {
+                const [{ count }] = yield (0, ps_config_1.default)(this.table)
+                    .where({ post_id })
+                    .count("id as count");
+                return Number(count);
+            }
+            catch (error) {
+                console.error("Erro ao contar likes por post:", error);
+                throw error;
+            }
         });
     }
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const result = yield this.repo.find({
-                    relations: ['user', 'post']
-                });
+                const result = yield (0, ps_config_1.default)(this.table)
+                    .select("*")
+                    // Se quiser trazer dados de user e post, precisa de join com as tabelas:
+                    .leftJoin("users", "likes.user_id", "users.id")
+                    .leftJoin("posts", "likes.post_id", "posts.id");
                 return {
                     data: result,
-                    message: 'Likes encontrados com sucesso',
+                    message: "Likes encontrados com sucesso",
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error(error);
                 return {
                     error,
-                    message: 'Erro ao buscar likes',
+                    message: "Erro ao buscar likes",
                 };
             }
         });
@@ -72,20 +82,19 @@ class LikeRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const result = yield this.repo.findOne({
-                    where: { id: id },
-                    relations: ['user', 'post']
-                });
+                const result = yield (0, ps_config_1.default)(this.table)
+                    .where({ id })
+                    .first();
                 return {
-                    data: result,
-                    message: 'Likes encontrados com sucesso',
+                    data: result !== null && result !== void 0 ? result : null,
+                    message: "Like encontrado com sucesso",
                 };
             }
             catch (error) {
-                console.log(error);
+                console.error(error);
                 return {
                     error,
-                    message: 'Erro ao buscar likes',
+                    message: "Erro ao buscar like",
                 };
             }
         });
@@ -93,11 +102,10 @@ class LikeRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const remove = yield this.repo.delete({ id: id });
-                return remove;
+                yield (0, ps_config_1.default)(this.table).where({ id }).del();
             }
             catch (error) {
-                console.log(error);
+                console.error(`Erro ao deletar like com id ${id}:`, error);
                 throw error;
             }
         });

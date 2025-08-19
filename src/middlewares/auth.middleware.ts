@@ -23,9 +23,6 @@ export default class AuthMiddleware {
 
             const decoded = jwt.verify(token, secretAccessToken);
             req.user = decoded as any;
-
-            console.log(decoded);
-
             next();
         } catch (error: any) {
             if (error.name === 'TokenExpiredError') {

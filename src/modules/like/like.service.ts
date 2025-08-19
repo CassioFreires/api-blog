@@ -60,7 +60,7 @@ export default class LikeService {
         }
     }
 
-    async getById(id: number): Promise<IReturnResponse<ILike>> {
+    async getById(id: number): Promise<IReturnResponse<ILike | null>> {
         try {
             const result = await this.likeRepository.getById(id);
             return result;

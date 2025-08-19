@@ -31,7 +31,6 @@ class AuthMiddleware {
                 }
                 const decoded = jsonwebtoken_1.default.verify(token, secretAccessToken);
                 req.user = decoded;
-                console.log(decoded);
                 next();
             }
             catch (error) {

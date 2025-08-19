@@ -97,7 +97,6 @@ class AuthService {
                 if (!user)
                     return { message: 'Usuário não encontrado' };
                 const isPasswordValid = yield (0, hashPassword_2.comparePassword)(newData.password_hash, user.password_hash);
-                console.log(isPasswordValid);
                 if (!isPasswordValid) {
                     return { message: 'Senha inválida', isPasswordValid };
                 }
@@ -109,7 +108,6 @@ class AuthService {
                         twoFactorEnabled: true
                     };
                 }
-                console.log(user);
                 return {
                     message: 'Usuário autenticado',
                     user: {
@@ -120,7 +118,10 @@ class AuthService {
                         bio: user.bio,
                         avataUrl: user.avatarUrl,
                         isTwoFactorEnabled: user.isTwoFactorEnabled,
-                        role: user.role
+                        role: {
+                            role_name: user.role_name,
+                            role_description: user.role_description
+                        }
                     }
                 };
             }

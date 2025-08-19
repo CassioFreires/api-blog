@@ -12,24 +12,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const post_entities_1 = require("./entities/post.entities");
 const ps_config_1 = __importDefault(require("../../config/ps.config"));
-const user_entities_1 = __importDefault(require("../user/entities/user.entities"));
 class PostRepository {
     constructor() {
-        this.repo = ps_config_1.default.getRepository(post_entities_1.PostEntity);
-        this.repoUser = ps_config_1.default.getRepository(user_entities_1.default);
+        this.table = "posts";
+        this.userTable = "users";
     }
     create(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
             try {
-                const userExists = yield this.repoUser.findOneBy({ id: (_a = data.user) === null || _a === void 0 ? void 0 : _a.id });
+                const userExists = yield (0, ps_config_1.default)(this.userTable).where({ id: data.user_id }).first();
                 if (!userExists) {
-                    return { message: 'Usuário informado não existe.' };
+                    return { message: "Usuário informado não existe." };
                 }
-                const post = yield this.repo.create(data);
-                return this.repo.save(post);
+                const [post] = yield (0, ps_config_1.default)(this.table)
+                    .insert({
+                    title: data.title,
+                    content: data.content,
+                    user_id: data.user_id,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                })
+                    .returning("*");
+                return post;
             }
             catch (error) {
                 console.log(error);
@@ -40,16 +45,17 @@ class PostRepository {
     getAll(limit, page) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const [posts, total] = yield this.repo.findAndCount({
-                    relations: ['user'],
-                    order: {
-                        createAt: 'DESC'
-                    },
-                    skip: (page - 1) * limit,
-                    take: limit
-                });
+                const offset = (page - 1) * limit;
+                const [totalResult] = yield (0, ps_config_1.default)(this.table).count("* as total");
+                const total = Number(totalResult.total);
+                const posts = yield (0, ps_config_1.default)(this.table)
+                    .select("posts.*", "users.name as user_name", "users.email as user_email")
+                    .join("users", "users.id", "posts.user_id")
+                    .orderBy([{ column: "createAt", order: "desc" }, { column: "id", order: "desc" }]) // 👈 garante consistência
+                    .limit(limit)
+                    .offset(offset);
                 return {
-                    message: 'Postagens encontradas com sucesso',
+                    message: "Postagens encontradas com sucesso",
                     pagination: {
                         currentPage: page,
                         totalItems: total,
@@ -72,16 +78,23 @@ class PostRepository {
     getTop() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const posts = yield this.repo.find({
-                    relations: ['user'],
-                    order: {
-                        createAt: 'DESC'
-                    },
-                    take: 3
-                });
+                // Pegando todas as categorias
+                const categories = yield (0, ps_config_1.default)('categories').select('id', 'name', 'description');
+                // Para cada categoria, pegar a última postagem
+                const postsPromises = categories.map((cat) => __awaiter(this, void 0, void 0, function* () {
+                    const [post] = yield (0, ps_config_1.default)(this.table)
+                        .select("posts.*", "users.name as user_name", "users.email as user_email", "categories.id as category_id", "categories.name as category_name", "categories.description as category_description")
+                        .join('categories', 'posts.category_id', 'categories.id')
+                        .join('users', 'users.id', 'posts.user_id')
+                        .where('categories.id', cat.id)
+                        .orderBy('createAt', 'desc')
+                        .limit(1); // só a última postagem de cada categoria
+                    return post;
+                }));
+                const posts = (yield Promise.all(postsPromises)).filter(Boolean);
                 return {
-                    message: 'Postagens encontradas com sucesso',
-                    data: posts,
+                    message: "Últimas postagens por categoria encontradas",
+                    data: posts
                 };
             }
             catch (error) {
@@ -93,16 +106,17 @@ class PostRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const post = yield this.repo.findOne({
-                    where: { id },
-                    relations: ['user']
-                });
+                const post = yield (0, ps_config_1.default)(this.table)
+                    .select("posts.*", "users.name as user_name", "users.email as user_email")
+                    .join("users", "users.id", "posts.user_id")
+                    .where("posts.id", id)
+                    .first();
                 if (!post) {
-                    return { message: 'Post não encontrado' };
+                    return { message: "Post não encontrado" };
                 }
                 return {
-                    message: 'Postagens encontradas com sucesso',
-                    data: post,
+                    message: "Postagem encontrada com sucesso",
+                    data: post
                 };
             }
             catch (error) {
@@ -114,9 +128,13 @@ class PostRepository {
     update(id, updatePostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.repo.update(id, updatePostDto);
-                const updatePost = yield this.repo.findOne({ where: { id } });
-                return updatePost;
+                yield (0, ps_config_1.default)(this.table)
+                    .where({ id })
+                    .update(Object.assign(Object.assign({}, updatePostDto), { updated_at: new Date() }));
+                const updatedPost = yield (0, ps_config_1.default)(this.table)
+                    .where({ id })
+                    .first();
+                return updatedPost !== null && updatedPost !== void 0 ? updatedPost : null;
             }
             catch (error) {
                 console.log(error);
@@ -127,12 +145,30 @@ class PostRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const resultPost = yield this.repo.findOne({ where: { id } });
-                yield this.repo.delete(id);
-                return resultPost;
+                const post = yield (0, ps_config_1.default)(this.table).where({ id }).first();
+                yield (0, ps_config_1.default)(this.table).where({ id }).del();
+                return post !== null && post !== void 0 ? post : null;
             }
             catch (error) {
                 console.log(error);
+                throw error;
+            }
+        });
+    }
+    getAllPostsByCategory(slug) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!slug)
+                return [];
+            try {
+                const posts = yield (0, ps_config_1.default)(this.table)
+                    .join('categories', 'posts.category_id', 'categories.id')
+                    .where('categories.slug', 'ilike', slug)
+                    .orderBy('createAt', 'desc')
+                    .select('posts.*');
+                return posts;
+            }
+            catch (error) {
+                console.error('Erro ao buscar posts por categoria:', error);
                 throw error;
             }
         });

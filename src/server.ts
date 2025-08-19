@@ -1,9 +1,9 @@
 import app from "./app";
-import { connectPostegres } from "./database/ps.database";
+import { testConnection } from "./database/ps.database";
 
 async function start() {
     try {
-        await connectPostegres();
+        await testConnection();
         app.listen(3000, () => {
             console.log('Servidor rodando na porta: 3000');
         });
@@ -12,6 +12,7 @@ async function start() {
         throw new Error('Error ao tentar conectar-se ao banco de dados')
     }
 }
+
 
 
 start();
