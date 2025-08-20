@@ -86,7 +86,6 @@ export class UserController {
                 return res.status(404).json({ message: "User not found or not updated" });
             }
 
-            console.log(user)
             // ✅ Retorna só o usuário atualizado
             return res.status(200).json(user);
 
