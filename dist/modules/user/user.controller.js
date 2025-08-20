@@ -78,18 +78,28 @@ class UserController {
     }
     update(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             try {
                 const id = Number(req.params.id);
                 const data = req.body;
+                const userIdFromToken = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.user.id);
+                const idToUpdate = Number(req.params.id);
+                if (userIdFromToken !== idToUpdate) {
+                    return res.status(403).json({ message: "Acesso negado" });
+                }
                 const user = yield this.userService.update(id, data);
                 if (!user) {
-                    return res.status(404).json({ message: 'User not found or not updated' });
+                    return res.status(404).json({ message: "User not found or not updated" });
                 }
-                return res.status(200).json({ message: 'User updated', data: user });
+                console.log(user);
+                // ✅ Retorna só o usuário atualizado
+                return res.status(200).json(user);
             }
             catch (error) {
-                console.error('Error updating user:', error);
-                return res.status(500).json({ message: 'Internal server error while updating user' });
+                console.error("Error updating user:", error);
+                return res
+                    .status(500)
+                    .json({ message: "Internal server error while updating user" });
             }
         });
     }

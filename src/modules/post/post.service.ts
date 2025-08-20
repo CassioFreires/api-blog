@@ -82,8 +82,6 @@ export default class PostService {
 
     async getAllPostsByCategory(slug: string): Promise<IPost[] | null> {
         if (!slug || slug.trim() === '') return [];
-        console.log('aqio', slug)
-
         try {
             const posts = await this.postRepository.getAllPostsByCategory(slug);
             return posts.length > 0 ? posts : null;
