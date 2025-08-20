@@ -190,5 +190,4 @@ export default class PostRepository {
       throw error;
     }
   }
-
 }
