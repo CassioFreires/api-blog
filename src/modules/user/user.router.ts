@@ -1,6 +1,10 @@
 import { Router, Request, Response } from "express";
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
+import AuthMiddleware from "../../middlewares/auth.middleware";
+import { checkRole } from "../../middlewares/authRole.middleware";
+
+const authMiddleware = new AuthMiddleware()
 
 const userRouters = Router();
 
@@ -16,9 +20,12 @@ userRouters.get('/',
 userRouters.get('/:id',
     ((req: Request, res: Response) => { userController.getById(req, res) })
 );
+
 userRouters.patch('/:id',
+    authMiddleware.auth,
     ((req: Request, res: Response) => { userController.update(req, res) })
 );
+
 userRouters.delete('/:id',
     ((req: Request, res: Response) => { userController.delete(req, res) })
 );

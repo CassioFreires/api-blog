@@ -68,20 +68,36 @@ export class UserController {
         }
     }
 
-    async update(req: Request, res: Response): Promise<Response<IUser>> {
+    async update(req: Request, res: Response): Promise<Response<IUser | { message: string }>> {
         try {
             const id = Number(req.params.id);
             const data: UpdateUserDTO = req.body;
-            const user = await this.userService.update(id, data);
-            if (!user) {
-                return res.status(404).json({ message: 'User not found or not updated' });
+            const userIdFromToken = Number(req.user?.user.id);
+            const idToUpdate = Number(req.params.id)
+
+            if (userIdFromToken !== idToUpdate) {
+                return res.status(403).json({ message: "Acesso negado" });
             }
-            return res.status(200).json({ message: 'User updated', data: user });
+
+
+            const user = await this.userService.update(id, data);
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found or not updated" });
+            }
+
+            console.log(user)
+            // ✅ Retorna só o usuário atualizado
+            return res.status(200).json(user);
+
         } catch (error) {
-            console.error('Error updating user:', error);
-            return res.status(500).json({ message: 'Internal server error while updating user' });
+            console.error("Error updating user:", error);
+            return res
+                .status(500)
+                .json({ message: "Internal server error while updating user" });
         }
     }
+
 
     async delete(req: Request, res: Response): Promise<Response<IUser>> {
         try {
