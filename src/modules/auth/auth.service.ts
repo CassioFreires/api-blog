@@ -68,15 +68,14 @@ export default class AuthService {
                 user: {
                     id: user.id,
                     name: user.name,
-                    fullName: user.lastName,
+                    fullName: user.fullName || user.lastName, // se fullName existir no banco
                     email: user.email,
                     bio: user.bio,
-                    avataUrl: user.avatarUrl,
+                    avatarUrl: user.avatarUrl, // corrigido o typo
                     isTwoFactorEnabled: user.isTwoFactorEnabled,
-                    role: {
-                        role_name: user.role_name,
-                        role_description: user.role_description
-                    }
+                    role_id: user.role_id,
+                    role_name: user.role_name,
+                    role_description: user.role_description
                 }
             };
 
@@ -159,7 +158,7 @@ export default class AuthService {
         try {
             await this.userRepository.clearRefreshToken(userId);
             return { message: "Logout realizado com sucesso" };
-        }catch(error) {
+        } catch (error) {
             console.log(error);
             throw error;
         }

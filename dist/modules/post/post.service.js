@@ -105,7 +105,6 @@ class PostService {
         return __awaiter(this, void 0, void 0, function* () {
             if (!slug || slug.trim() === '')
                 return [];
-            console.log('aqio', slug);
             try {
                 const posts = yield this.postRepository.getAllPostsByCategory(slug);
                 return posts.length > 0 ? posts : null;

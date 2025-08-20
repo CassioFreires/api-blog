@@ -48,11 +48,12 @@ class UserRepository {
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const user = yield (0, ps_config_1.default)(this.tableName)
-                    .where({ id })
-                    .leftJoin('roles', 'users.role_id', 'roles.id')
+                const user = yield (0, ps_config_1.default)("users")
+                    .select("users.id", "users.name", "users.email", "users.bio", "users.avatarUrl", "roles.id as role_id", "roles.name as role_name", "roles.description as role_description")
+                    .leftJoin("roles", "users.role_id", "roles.id")
+                    .where("users.id", id) // 👈 coluna totalmente qualificada
                     .first();
-                return user !== null && user !== void 0 ? user : null;
+                return user || null;
             }
             catch (error) {
                 console.error(`Erro ao buscar usuário com id ${id}:`, error);
@@ -78,7 +79,15 @@ class UserRepository {
     update(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield (0, ps_config_1.default)(this.tableName).where({ id }).update(data);
+                yield (0, ps_config_1.default)("users")
+                    .where("users.id", id) // 👈 também qualificado
+                    .update({
+                    name: data.name,
+                    email: data.email,
+                    bio: data.bio,
+                    avatarUrl: data.avatarUrl,
+                });
+                // depois de atualizar, pega os dados formatados pelo getById
                 return yield this.getById(id);
             }
             catch (error) {

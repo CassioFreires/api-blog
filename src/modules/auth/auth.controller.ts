@@ -46,7 +46,7 @@ export default class AuthController {
 
             const privateKey = String(process.env.JWT_PRIVATE_ACCESS_TOKEN_KEY);
             const token = jwt.sign(result, privateKey, {expiresIn: '1d'});
-            
+
             // Sucesso: retorna token e usuário
             return res.status(200).json({
                 token,

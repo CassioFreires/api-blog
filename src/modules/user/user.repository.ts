@@ -32,17 +32,28 @@ export class UserRepository {
 
   async getById(id: number): Promise<IUser | null> {
     try {
-      const user = await db(this.tableName)
-        .where({ id })
-        .leftJoin('roles', 'users.role_id', 'roles.id')
+      const user = await db("users")
+        .select(
+          "users.id",
+          "users.name",
+          "users.email",
+          "users.bio",
+          "users.avatarUrl",
+          "roles.id as role_id",
+          "roles.name as role_name",
+          "roles.description as role_description"
+        )
+        .leftJoin("roles", "users.role_id", "roles.id")
+        .where("users.id", id)   // 👈 coluna totalmente qualificada
         .first();
 
-      return user ?? null;
+      return user || null;
     } catch (error) {
       console.error(`Erro ao buscar usuário com id ${id}:`, error);
       throw error;
     }
   }
+
 
   async getByEmail(email: string): Promise<IUser | null> {
     try {
@@ -60,7 +71,16 @@ export class UserRepository {
 
   async update(id: number, data: UpdateUserDTO): Promise<IUser | null> {
     try {
-      await db(this.tableName).where({ id }).update(data);
+      await db("users")
+        .where("users.id", id)   // 👈 também qualificado
+        .update({
+          name: data.name,
+          email: data.email,
+          bio: data.bio,
+          avatarUrl: data.avatarUrl,
+        });
+
+      // depois de atualizar, pega os dados formatados pelo getById
       return await this.getById(id);
     } catch (error) {
       console.error(`Erro ao atualizar usuário com id ${id}:`, error);
