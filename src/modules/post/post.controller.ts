@@ -6,9 +6,11 @@ import PostService from "./post.service";
 import { IReturnResponse } from "./interfaces/response.interface";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { validationSchemaUpdatePost } from "./schema/validation-update-post";
+import { UserService } from "../user/user.service";
 
 export default class PostController {
-    constructor(private readonly postService: PostService) { }
+    private readonly userService = new UserService();
+    constructor(private readonly postService: PostService,) { }
 
     async create(req: Request, res: Response): Promise<Response<IPost | IReturnResponse>> {
         try {
@@ -68,6 +70,25 @@ export default class PostController {
         }
     }
 
+    async allPostsByUser(req: Request, res: Response): Promise<Response> {
+        try {
+            const userId = Number(req.user?.user.id);
+
+            if (!userId) {
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
+            }
+
+            const posts = await this.postService.allPostsByUser(userId);
+
+            return res.status(200).json({
+                message: "Posts encontrados com sucesso.",
+                data: posts
+            });
+        } catch (error) {
+            console.error('Erro interno no servidor ao tentar obter os posts do usuário:', error);
+            return res.status(500).json({ message: 'Erro interno no servidor.' });
+        }
+    }
     async getById(req: Request, res: Response): Promise<Response<IPost | IReturnResponse | null>> {
         try {
             const post = await this.postService.getById(Number(req.params.id));

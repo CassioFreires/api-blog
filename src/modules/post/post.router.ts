@@ -26,6 +26,11 @@ postRouters.get('/top',
 postRouters.get('/top', (req:Request, res:Response) => {
   userController.getTop(req, res);
 });
+postRouters.get('/allpostsbyuser', 
+    authMiddleware.auth,
+    (req:Request, res:Response) => {userController.allPostsByUser(req, res)},
+
+)
 postRouters.get('/:id',
     validateIdParam('id'),
     ((req: Request, res: Response) => { userController.getById(req, res) })

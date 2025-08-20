@@ -44,6 +44,16 @@ export default class PostService {
         }
     }
 
+    async allPostsByUser(userId: number): Promise<IPost[] | IReturnResponse> {
+        try {
+            const posts = await this.postRepository.allPostsByUser(userId);
+            return posts;
+        } catch (error) {
+            console.error('Erro no serviço ao buscar posts do usuário:', error);
+            throw error;
+        }
+    }
+
     async getById(id: number): Promise<IPost | IReturnResponse | null> {
         try {
             const post = await this.postRepository.getById(id);
