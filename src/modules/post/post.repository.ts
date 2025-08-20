@@ -171,4 +171,24 @@ export default class PostRepository {
     }
   }
 
+
+  async allPostsByUser(userId: number): Promise<IPost[] | IReturnResponse> {
+    try {
+      const posts = await db(this.table)
+        .select("posts.*", "users.name as user_name", "users.email as user_email")
+        .join("users", "users.id", "posts.user_id")
+        .where("posts.user_id", userId)
+        .orderBy('createAt', 'desc');
+
+      if (posts.length === 0) {
+        return { message: "Nenhum post encontrado para este usuário." };
+      }
+
+      return posts;
+    } catch (error) {
+      console.error('Erro ao buscar posts por usuário:', error);
+      throw error;
+    }
+  }
+
 }
