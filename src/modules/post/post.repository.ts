@@ -19,10 +19,12 @@ export default class PostRepository {
       const [post] = await db(this.table)
         .insert({
           title: data.title,
+          subtitle: data.subtitle,
           content: data.content,
+          category_id: data.category_id,
           user_id: data.user_id,
-          created_at: new Date(),
-          updated_at: new Date()
+          createAt: new Date(),
+          updatAt: new Date()
         })
         .returning("*");
 

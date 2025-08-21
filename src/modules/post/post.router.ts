@@ -18,6 +18,13 @@ postRouters.post('/',
     checkRole(['admin']),
     ((req: Request, res: Response) => { userController.create(req, res) })
 );
+
+postRouters.post('/createpostbyuser', 
+    authMiddleware.auth,
+    (req:Request, res:Response) => {userController.createPostByUser(req, res)}
+)
+   
+
 postRouters.get('/',
     ((req: Request, res: Response) => { userController.getAll(req, res) })
 );

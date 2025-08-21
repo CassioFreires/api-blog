@@ -2,6 +2,7 @@ export class CreatePostDto {
     id?:number;
     title!: string;
     subtitle!: string;
+    category_id!:number;
     content!: string;
     user_id!: number;
 }

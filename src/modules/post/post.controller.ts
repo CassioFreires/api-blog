@@ -87,8 +87,6 @@ export default class PostController {
             const newData: UpdatePostDto = req.body;
             const id = Number(req.params.id);
 
-            console.log(id)
-
             // Verifica se o post existe
             const resultPost = await this.postService.getById(id);
             if (!resultPost) {
@@ -265,6 +263,45 @@ export default class PostController {
         }
     }
 
+    async createPostByUser(req: Request,res: Response): Promise<Response<IPost | { message: string; errors?: any }>> {
+        try {
+            // Garante que está autenticado
+            if (!req.user?.user.id) {
+                return res.status(401).json({ message: "Usuário não autenticado." });
+            }
 
+            const userId = Number(req.user.user.id);
 
+            // Validação dos dados do cliente
+            const validation = creatPostSchema.safeParse(req.body);
+            if (!validation.success) {
+                return res.status(400).json({
+                    message: "Falha de validação",
+                    errors: validation.error.flatten().fieldErrors,
+                });
+            }
+
+            // Dados validados + injeta user_id
+            const postData: CreatePostDto = {
+                ...validation.data, // title, subtitle, content, category_id (number)
+                user_id: userId,    // injeta user_id do token
+            };
+
+            // Criação do post
+            const post = await this.postService.create(postData);
+
+            return res.status(201).json({ post });
+        } catch (error: any) {
+            if (error.code === "23503") {
+                return res.status(400).json({
+                    message: "Usuário não existe. Violação de chave estrangeira.",
+                });
+            }
+
+            return res.status(500).json({
+                message: "Erro interno ao tentar criar o post.",
+            });
+        }
+    }
 }
+
