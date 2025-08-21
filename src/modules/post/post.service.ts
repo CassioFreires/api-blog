@@ -54,7 +54,7 @@ export default class PostService {
         }
     }
 
-    async getById(id: number): Promise<IPost | IReturnResponse | null> {
+    async getById(id: number): Promise<IReturnResponse | null> {
         try {
             const post = await this.postRepository.getById(id);
             return post;

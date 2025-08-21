@@ -10,7 +10,7 @@ import { UserService } from "../user/user.service";
 
 export default class PostController {
     private readonly userService = new UserService();
-    constructor(private readonly postService: PostService,) { }
+    private readonly postService = new PostService();
 
     async create(req: Request, res: Response): Promise<Response<IPost | IReturnResponse>> {
         try {
@@ -70,25 +70,7 @@ export default class PostController {
         }
     }
 
-    async allPostsByUser(req: Request, res: Response): Promise<Response> {
-        try {
-            const userId = Number(req.user?.user.id);
 
-            if (!userId) {
-                return res.status(401).json({ message: 'Usuário não autenticado.' });
-            }
-
-            const posts = await this.postService.allPostsByUser(userId);
-
-            return res.status(200).json({
-                message: "Posts encontrados com sucesso.",
-                data: posts
-            });
-        } catch (error) {
-            console.error('Erro interno no servidor ao tentar obter os posts do usuário:', error);
-            return res.status(500).json({ message: 'Erro interno no servidor.' });
-        }
-    }
     async getById(req: Request, res: Response): Promise<Response<IPost | IReturnResponse | null>> {
         try {
             const post = await this.postService.getById(Number(req.params.id));
@@ -104,6 +86,8 @@ export default class PostController {
         try {
             const newData: UpdatePostDto = req.body;
             const id = Number(req.params.id);
+
+            console.log(id)
 
             // Verifica se o post existe
             const resultPost = await this.postService.getById(id);
@@ -175,4 +159,79 @@ export default class PostController {
             return res.status(500).json({ message: 'Erro interno ao tentar obter os posts' });
         }
     }
+
+    async allPostsByUser(req: Request, res: Response): Promise<Response> {
+        try {
+            const userId = Number(req.user?.user.id);
+
+            if (!userId) {
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
+            }
+
+            const posts = await this.postService.allPostsByUser(userId);
+
+            return res.status(200).json({
+                message: "Posts encontrados com sucesso.",
+                data: posts
+            });
+        } catch (error) {
+            console.error('Erro interno no servidor ao tentar obter os posts do usuário:', error);
+            return res.status(500).json({ message: 'Erro interno no servidor.' });
+        }
+    }
+
+    async updatePostByUser(req: Request, res: Response): Promise<Response> {
+        try {
+            const newData: UpdatePostDto = req.body;
+            const {id} = newData;
+            const idPost = Number(id);
+            const userIdAuthenticated = Number(req.user?.user.id);
+
+            const resultPost = await this.postService.getById(Number(idPost));
+            if (!resultPost) {
+                return res.status(400).json({ message: 'Não existe postagem com o "ID" passado por parâmetro.' });
+            }
+
+            // Verifica se resultPost.data é um array ou um post único
+            if (!resultPost.data) {
+                return res.status(404).json({ message: "Post não encontrado." });
+            }
+
+            let postUserId: number | undefined;
+
+            if (Array.isArray(resultPost.data)) {
+                postUserId = resultPost.data[0]?.user_id;
+            } else {
+                postUserId = resultPost.data.user_id;
+            } 
+
+            // Valida se o usuário logado é o dono do post
+            if (postUserId !== userIdAuthenticated) {
+                return res.status(403).json({ message: "Você só pode alterar seus próprios posts." });
+            }
+
+
+            // Valida os dados com Zod
+            const validation = validationSchemaUpdatePost.safeParse(newData);
+            if (!validation.success) {
+                return res.status(400).json({
+                    message: 'Falha de validação',
+                    error: validation.error.flatten().fieldErrors
+                });
+            }
+
+            if (Object.keys(validation.data).length === 0) {
+                return res.status(400).json({ message: 'Nenhum campo foi enviado para atualização.' });
+            }
+
+            const updatePost = await this.postService.update(Number(id), validation.data);
+
+            return res.json({ message: 'Atualização realizada com sucesso.', updatePost });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Erro interno no servidor.' });
+        }
+    }
+
+
 }

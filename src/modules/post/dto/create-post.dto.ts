@@ -1,6 +1,7 @@
-    export class CreatePostDto {
-    title!:string;
-    subtitle!:string;
-    content!:string;
-    user_id!:number;
+export class CreatePostDto {
+    id?:number;
+    title!: string;
+    subtitle!: string;
+    content!: string;
+    user_id!: number;
 }

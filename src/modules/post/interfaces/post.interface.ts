@@ -1,12 +1,14 @@
 import { ICategory } from "src/modules/categories/interfaces/categories-interface";
-import UserEntity from "../../../modules/user/entities/user.entities";
 
 export interface IPost {
+    id?:number;
     title: string;
     subtitle: string;
     content: string;
     category:ICategory;
-    user: UserEntity,
+    user_id?:number;
+    user_name?:string;
+    user_email?:string;
     createAt: Date;
     updatAt: Date;
    
