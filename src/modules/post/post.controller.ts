@@ -183,7 +183,7 @@ export default class PostController {
     async updatePostByUser(req: Request, res: Response): Promise<Response> {
         try {
             const newData: UpdatePostDto = req.body;
-            const {id} = newData;
+            const { id } = newData;
             const idPost = Number(id);
             const userIdAuthenticated = Number(req.user?.user.id);
 
@@ -203,7 +203,7 @@ export default class PostController {
                 postUserId = resultPost.data[0]?.user_id;
             } else {
                 postUserId = resultPost.data.user_id;
-            } 
+            }
 
             // Valida se o usuário logado é o dono do post
             if (postUserId !== userIdAuthenticated) {
@@ -232,6 +232,39 @@ export default class PostController {
             return res.status(500).json({ message: 'Erro interno no servidor.' });
         }
     }
+
+    async deletePostByUser(req: Request, res: Response): Promise<Response> {
+        try {
+            const { id } = req.params; // ID do post enviado pelo cliente
+            const postId = Number(id);
+            const userIdAuthenticated = Number(req.user?.user.id);
+
+            // Busca o post
+            const resultPost = await this.postService.getById(postId);
+            if (!resultPost || !resultPost.data) {
+                return res.status(404).json({ message: "Post não encontrado." });
+            }
+
+            // Determina o user_id do post
+            const postUserId = Array.isArray(resultPost.data)
+                ? resultPost.data[0]?.user_id
+                : resultPost.data.user_id;
+
+            // Verifica se o usuário logado é o dono do post
+            if (postUserId !== userIdAuthenticated) {
+                return res.status(403).json({ message: "Você só pode deletar seus próprios posts." });
+            }
+
+            // Chama o serviço para deletar
+            await this.postService.delete(postId);
+
+            return res.json({ message: "Post deletado com sucesso." });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Erro interno no servidor." });
+        }
+    }
+
 
 
 }

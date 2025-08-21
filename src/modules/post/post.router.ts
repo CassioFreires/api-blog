@@ -31,7 +31,6 @@ postRouters.get('/top', (req: Request, res: Response) => {
 postRouters.get('/allpostsbyuser',
     authMiddleware.auth,
     (req: Request, res: Response) => { userController.allPostsByUser(req, res) },
-
 )
 
 postRouters.patch('/updatepostbyuser',
@@ -43,6 +42,11 @@ postRouters.get('/:id',
     ((req: Request, res: Response) => { userController.getById(req, res) })
 );
 
+postRouters.get('/bycategories/:slug',
+    (req, res) => {
+        userController.getAllPostsByCategory(req, res);
+});
+
 postRouters.patch('/:id',
     validateIdParam('id'),
     ((req: Request, res: Response) => { userController.update(req, res) })
@@ -52,10 +56,15 @@ postRouters.delete('/:id',
     ((req: Request, res: Response) => { userController.delete(req, res) })
 );
 
-postRouters.get('/bycategories/:slug',
-    (req, res) => {
-        userController.getAllPostsByCategory(req, res);
-    });
+postRouters.delete('/deletepostbyuser/:id',
+    validateIdParam('id'),
+    authMiddleware.auth,
+    ((req: Request, res: Response) => { userController.deletePostByUser(req, res) })
+);
+
+
+
+
 
 
 
