@@ -45,7 +45,6 @@ export class RoleController {
     async getAll(req: Request, res: Response): Promise<Response<IRole>> {
         try {
             const roles = await this.roleService.getAll();
-            console.log(roles)
             if (!roles || roles.length === 0) {
                 return res.status(404).json({ message: 'No roles found' });
             }

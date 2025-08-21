@@ -14,6 +14,7 @@ export default class PostService {
                 title: data.title.toLowerCase(),
                 subtitle: data.subtitle.toLowerCase(),
                 content: data.content.toLowerCase(),
+                category_id: Number(data.category_id),
                 user_id: Number(data.user_id)
             }
             const post = await this.postRepository.create(newData);

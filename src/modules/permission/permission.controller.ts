@@ -45,7 +45,6 @@ export class PermissionController {
     async getAll(req: Request, res: Response): Promise<Response<IPermission>> {
         try {
             const permission = await this.permissionService.getAll();
-            console.log(permission)
             if (!permission || permission.length === 0) {
                 return res.status(404).json({ message: 'No permission found' });
             }
