@@ -107,7 +107,7 @@ export default class PostRepository {
   async getById(id: number): Promise<IReturnResponse> {
     try {
       const post = await db(this.table)
-        .select("posts.*", "users.name as user_name", "users.email as user_email")
+        .select("posts.*", "users.name as user_name", "users.email as user_email", "users.id as user_id")
         .join("users", "users.id", "posts.user_id")
         .where("posts.id", id)
         .first();
@@ -130,7 +130,7 @@ export default class PostRepository {
     try {
       await db(this.table)
         .where({ id })
-        .update({ ...updatePostDto, updated_at: new Date() });
+        .update({ ...updatePostDto, updatAt: new Date() });
 
       const updatedPost = await db(this.table)
         .where({ id })
@@ -170,8 +170,6 @@ export default class PostRepository {
       throw error;
     }
   }
-
-
   async allPostsByUser(userId: number): Promise<IPost[] | IReturnResponse> {
     try {
       const posts = await db(this.table)
@@ -190,4 +188,5 @@ export default class PostRepository {
       throw error;
     }
   }
+  
 }
