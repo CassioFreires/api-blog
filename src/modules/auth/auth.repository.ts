@@ -1,19 +1,22 @@
 import db from "../../config/ps.config";
+import { IUser } from "../user/interfaces/user.interface";
 import { SignupAuthDto } from "./dto/signup.dto";
 
 export default class AuthRepository {
   private table = "users";
 
-  async signup(data: SignupAuthDto) {
-    try {
-      const [insertedId] = await db(this.table).insert(data);
-      const user = await this.findById(insertedId);
-      return user;
-    } catch (error) {
-      console.error("Erro ao criar usuário no repositório:", error);
-      throw new Error("Erro ao salvar usuário no banco de dados.");
-    }
-  }
+  // async signup(data: SignupAuthDto):Promise<IUser> {
+  //      try {
+  //        const [user] = await db(this.table)
+  //          .insert(data)
+  //          .returning('*'); // retorna os dados inseridos (Postgres)
+   
+  //        return user;
+  //      } catch (error) {
+  //        console.error('Erro ao criar usuário no repositório:', error);
+  //        throw error;
+  //      }
+  // }
 
   async getByEmail(email: string) {
     if (!email) throw new Error("Email é obrigatório para buscar usuário.");

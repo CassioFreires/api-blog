@@ -6,11 +6,10 @@ function hashPassword(password) {
 }
 
 /**
- * @param { import('knex').Knex } knex
+ * @param {import('knex').Knex} knex
  */
-module.exports.seed = async function (knex) {
+exports.seed = async function(knex) {
   const password = '123456';
-
   const passwodAdmin = hashPassword(password);
   const passwodEditor = hashPassword(password);
   const passwodAutor = hashPassword(password);
@@ -20,25 +19,22 @@ module.exports.seed = async function (knex) {
 
   await knex('users').insert([
     {
-      id: 1,
       name: 'Carlos',
       lastName: 'Silva',
       email: 'carlos.silva@admin.com',
-      password_hash: passwodAdmin, // hashed password (exemplo)
+      password_hash: passwodAdmin,
       phone: '11999999999',
       bio: 'Administrador do sistema',
       avatarUrl: null,
       isActive: true,
-      role_id: 1, // admin
+      role_id: 1,
       isTwoFactorEnabled: false,
       twoFactorSecret: null,
       refreshToken: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null,
     },
     {
-      id: 2,
       name: 'Mariana',
       lastName: 'Oliveira',
       email: 'mariana.editor@example.com',
@@ -47,16 +43,14 @@ module.exports.seed = async function (knex) {
       bio: 'Editora de conteúdos',
       avatarUrl: null,
       isActive: true,
-      role_id: 2, // editor
+      role_id: 2,
       isTwoFactorEnabled: false,
       twoFactorSecret: null,
       refreshToken: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null,
     },
     {
-      id: 3,
       name: 'João',
       lastName: 'Souza',
       email: 'joao.author@example.com',
@@ -65,16 +59,14 @@ module.exports.seed = async function (knex) {
       bio: 'Autor de posts',
       avatarUrl: null,
       isActive: true,
-      role_id: 3, // author
+      role_id: 3,
       isTwoFactorEnabled: false,
       twoFactorSecret: null,
       refreshToken: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null,
     },
     {
-      id: 4,
       name: 'Ana',
       lastName: 'Costa',
       email: 'ana.user@example.com',
@@ -83,15 +75,12 @@ module.exports.seed = async function (knex) {
       bio: null,
       avatarUrl: null,
       isActive: true,
-      role_id: 4, // usuário normal
+      role_id: 4,
       isTwoFactorEnabled: false,
       twoFactorSecret: null,
       refreshToken: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null,
     }
   ]);
 };
-
-
