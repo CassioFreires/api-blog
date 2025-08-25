@@ -1,3 +1,8 @@
+// postRouters.ts
+// Sem alterações significativas no código, apenas a ordem e uma correção na rota.
+// A rota `get('/top')` estava duplicada.
+// Além disso, a sintaxe da rota 'post/' foi corrigida para usar o middleware de forma encadeada.
+
 import { Router, Request, Response, NextFunction } from "express";
 import PostController from "./post.controller";
 import PostService from "./post.service";
@@ -11,29 +16,25 @@ const postRouters = Router();
 const authMiddleware = new AuthMiddleware()
 const userController = new PostController()
 
+// CORREÇÃO: Middleware encadeado de forma correta
 postRouters.post('/',
-    ((req: Request, res: Response, next: NextFunction) => {
-        authMiddleware.auth
-    }),
+    authMiddleware.auth,
     checkRole(['admin']),
-    ((req: Request, res: Response) => { userController.create(req, res) })
+    (req: Request, res: Response) => { userController.create(req, res) }
 );
 
-postRouters.post('/createpostbyuser', 
+postRouters.post('/createpostbyuser',
     authMiddleware.auth,
     (req:Request, res:Response) => {userController.createPostByUser(req, res)}
 )
-   
 
+// A rota '/top' estava duplicada. Uma delas foi removida.
 postRouters.get('/',
     ((req: Request, res: Response) => { userController.getAll(req, res) })
 );
 postRouters.get('/top',
     ((req: Request, res: Response) => { userController.getTop(req, res) })
 );
-postRouters.get('/top', (req: Request, res: Response) => {
-    userController.getTop(req, res);
-});
 
 postRouters.get('/allpostsbyuser',
     authMiddleware.auth,
@@ -68,11 +69,5 @@ postRouters.delete('/deletepostbyuser/:id',
     authMiddleware.auth,
     ((req: Request, res: Response) => { userController.deletePostByUser(req, res) })
 );
-
-
-
-
-
-
 
 export default postRouters;
