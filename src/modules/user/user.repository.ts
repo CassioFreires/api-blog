@@ -21,9 +21,10 @@ export class UserRepository {
 
   async getAll(): Promise<IUser[]> {
     try {
+      // OTIMIZAÇÃO: Adicionando colunas de role para evitar N+1 queries no front-end
       return await db(this.tableName)
-        .select('*')
-        .leftJoin('roles', 'users.role_id', 'roles.id'); // exemplo com join
+        .select('users.*', 'roles.id as role_id', 'roles.name as role_name', 'roles.description as role_description')
+        .leftJoin('roles', 'users.role_id', 'roles.id');
     } catch (error) {
       console.error('Erro ao buscar todos usuários no repositório:', error);
       throw error;
@@ -44,7 +45,7 @@ export class UserRepository {
           "roles.description as role_description"
         )
         .leftJoin("roles", "users.role_id", "roles.id")
-        .where("users.id", id)   // 👈 coluna totalmente qualificada
+        .where("users.id", id) // 👈 coluna totalmente qualificada
         .first();
 
       return user || null;
@@ -54,11 +55,12 @@ export class UserRepository {
     }
   }
 
-
   async getByEmail(email: string): Promise<IUser | null> {
     try {
+      // OTIMIZAÇÃO: Qualificando a coluna email e adicionando select para evitar colisão de nomes
       const user = await db(this.tableName)
-        .where({ email })
+        .select('users.*', 'roles.name as role_name')
+        .where('users.email', email)
         .leftJoin('roles', 'users.role_id', 'roles.id')
         .first();
 
@@ -71,26 +73,29 @@ export class UserRepository {
 
   async update(id: number, data: UpdateUserDTO): Promise<IUser | null> {
     try {
-      await db("users")
-        .where("users.id", id)   // 👈 também qualificado
+      // OTIMIZAÇÃO: Usando `returning('*')` para obter o usuário atualizado em uma única query
+      const [updatedUser] = await db("users")
+        .where("users.id", id)
         .update({
           name: data.name,
           email: data.email,
           bio: data.bio,
           avatarUrl: data.avatarUrl,
-        });
-
-      // depois de atualizar, pega os dados formatados pelo getById
-      return await this.getById(id);
+        })
+        .returning('*');
+      
+      return updatedUser ?? null;
     } catch (error) {
       console.error(`Erro ao atualizar usuário com id ${id}:`, error);
       throw error;
     }
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<boolean> {
     try {
-      await db(this.tableName).where({ id }).del();
+      // OTIMIZAÇÃO: Retorna um booleano para indicar se a exclusão ocorreu
+      const deletedRows = await db(this.tableName).where({ id }).del();
+      return deletedRows > 0;
     } catch (error) {
       console.error(`Erro ao deletar usuário com id ${id}:`, error);
       throw error;
