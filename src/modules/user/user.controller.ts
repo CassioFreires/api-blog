@@ -14,7 +14,7 @@ export class UserController {
 
             const resultUser = await this.userService.getByEmail(data.email);
             if (resultUser) {
-                return res.status(400).json({ message: 'Email already in use' });
+                return res.status(400).json({ message: 'Email já está em uso'});
             }
 
             const validation = validationUpdateUser.safeParse(data);
@@ -26,12 +26,12 @@ export class UserController {
             }
 
             const user = await this.userService.create(data);
-            return res.status(201).json({ message: 'User created', data: user });
+            return res.status(201).json({ message: 'Usuário criado', data: user });
         } catch (error: any) {
             console.error('Error creating user:', error);
             // Tratamento específico para erro de e-mail duplicado (fallback caso falhe o getByEmail)
             if (error.code === '23505') {
-                return res.status(409).json({ message: 'E-mail already registered' });
+                return res.status(409).json({ message: 'E-mail já registrado' });
             }
 
             return res.status(500).json({

@@ -5,40 +5,32 @@ import { comparePassword } from "../../shared/hashPassword";
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { generateToken } from "../../shared/generateToken.shared";
-import { RoleRepository } from "../role/role.repository";
+import { CreateUserDTO } from "../user/dto/create-user.dto";
+import { IUser } from "../user/interfaces/user.interface";
 
 export default class AuthService {
     private userRepository = new AuthRepository();
-    private RoleRepository = new RoleRepository();
 
 
-    async signup(data: SignupAuthDto): Promise<any> {
-        try {
-            const userExist = await this.userRepository.getByEmail(data.email);
-            const roleExist = await this.RoleRepository.getByName('usuário comum');
-
-            if (userExist) return { message: "Email já está em uso" }
-            if (!roleExist) return { message: "Role padrão não existe para aplicar ao usuário comum!" }
-
-            const password_hash = await hashPassword(data.password_hash);
-
-            const newData: SignupAuthDto = {
-                name: data.name.toLocaleLowerCase(),
-                lastName: data.lastName.toLocaleLowerCase(),
-                email: data.email.toLocaleLowerCase(),
-                password_hash: password_hash,
-                bio: data?.bio?.toLocaleLowerCase(),
-                avatarUrl: data?.avatarUrl,
-                role_id: roleExist.id
-            }
-            const createUser = await this.userRepository.signup(newData);
-            return { message: "Usuário criado com sucesso", user: createUser }
-
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
-    }
+    // async signup(data: CreateUserDTO): Promise<IUser> {
+    //     try {
+    //       const hashedPassword = await hashPassword(data.password_hash);
+    //       const newData = {
+    //         name: data.name.toLocaleLowerCase(),
+    //         lastName: data.lastName.toLocaleLowerCase(),
+    //         email: data.email.toLocaleLowerCase(),
+    //         password_hash: hashedPassword,
+    //         bio: data?.bio,
+    //         avatarUrl: data?.avatarUrl,
+    //         role_id: data.role_id
+    //       };
+    //       return await this.userRepository.signup(newData);
+    //     } catch (error) {
+    //       console.error('Erro ao criar usuário:', error);
+    //       throw error;
+    //     }
+    //   }
+    
 
     async signin(data: { email: string, password_hash: string }): Promise<any> {
         try {
