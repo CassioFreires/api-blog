@@ -24,7 +24,8 @@ export default class LikeRepository {
       await db(this.table).insert({
         user_id,
         post_id,
-        created_at: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
       return true; // Curtido
     } catch (error) {

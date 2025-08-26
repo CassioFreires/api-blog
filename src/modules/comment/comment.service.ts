@@ -21,9 +21,9 @@ export default class CommentService {
     async getAllCommentsByPost(post_id: number): Promise<IReturnResponse<IComments[]>> {
         try {
             const result = await this.commentRepository.getAllCommentsByPost(post_id);
-            return result;
+            return result; // Retorna o objeto completo do repositório
         } catch (error: any) {
-            console.log(error);
+            console.error("Erro no serviço (getAllCommentsByPost):", error);
             throw error;
         }
     }

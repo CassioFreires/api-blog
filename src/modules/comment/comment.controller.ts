@@ -17,6 +17,9 @@ export default class CommentController {
         const data: CreateCommentDto = req.body;
         const validation = validationCommentSchema.safeParse(data);
 
+        console.log(data)
+        console.log(validation)
+
         if (!validation.success) {
             return res.status(400).json({
                 message: 'Dados inválidos',
@@ -108,6 +111,8 @@ export default class CommentController {
         try {
             const id = Number(req.params.id);
             const data: UpdateCommentDto = req.body;
+            const itsAuthenticate = req.user?.user.id;
+
             const validation = validationCommentUpdateSchema.safeParse(data)
 
             if (!validation.success) {
@@ -117,21 +122,23 @@ export default class CommentController {
                 })
             }
 
-
-            if (!data?.content) {
-                return res.status(400).json({
-                    message: 'Campo "content" é obrigatório.'
-                });
-            }
-
             const commentExist = await this.commentService.getById(id);
+
             if (!commentExist.data) {
                 return res.status(404).json({
                     message: 'Comentário não encontrado.'
                 });
             }
 
-            const updatedComment = await this.commentService.update(id, data);
+
+            if (itsAuthenticate !== commentExist.data.user_id) {
+                return res.status(401).json({
+                    message: 'Você não tem permissão para editar este comentario'
+                })
+            }
+
+
+            const updatedComment = await this.commentService.update(commentExist.data.id, data);
             return res.json(updatedComment);
 
         } catch (error) {
@@ -141,32 +148,35 @@ export default class CommentController {
             });
         }
     }
-
     async delete(req: Request, res: Response): Promise<Response<IReturnResponse<null>>> {
         try {
-            const id = Number(req.params.id);
+            const commentId = Number(req.params.id);
+            const authenticatedUserId = req.user?.user.id;
 
-            if (isNaN(id)) {
-                return res.status(400).json({
-                    message: 'Parâmetro "id" inválido'
-                });
+            if (!authenticatedUserId) {
+                return res.status(401).json({ message: "Usuário não autenticado" });
             }
 
-            const deleted = await this.commentService.delete(id);
-
-            if (!deleted.data) {
-                return res.status(404).json({
-                    message: deleted.message
-                });
+            const comment = await this.commentService.getById(commentId);
+            if (!comment?.data) {
+                return res.status(404).json({ message: "Comentário não encontrado" });
             }
 
-            return res.status(200).json(deleted);
+            if (comment.data.user_id !== authenticatedUserId) {
+                return res.status(403).json({ message: "Você não tem permissão para excluir este comentário" });
+            }
 
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({
-                message: 'Erro interno ao tentar deletar o comentário'
-            });
+            await this.commentService.delete(commentId);
+
+            return res.status(200).json({ message: "Comentário deletado com sucesso", data: null });
+
+        } catch (error: any) {
+            if (error.message === "Comentário não encontrado") {
+                return res.status(404).json({ message: error.message });
+            }
+
+            console.error(error);
+            return res.status(500).json({ message: "Erro interno ao tentar deletar o comentário" });
         }
     }
 

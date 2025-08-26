@@ -1,13 +1,16 @@
 import { Router, Request, Response } from "express";
 import LikeController from "./like.controller";
 import LikeService from "./like.service";
+import AuthMiddleware from "../../middlewares/auth.middleware";
 
 const likeRouters = Router();
 
 const likeService = new LikeService()
-const likeController = new LikeController(likeService)
+const likeController = new LikeController(likeService);
+const authMiddleware = new AuthMiddleware();
 
 likeRouters.post('/toggle',
+    authMiddleware.auth,
     (req: Request, res: Response) => {likeController.toggle(req, res)}
 );
 

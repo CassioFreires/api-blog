@@ -7,6 +7,8 @@ import { IComments } from "./interfaces/comment.interface";
 export default class CommentRepository {
   private table = "comments";
 
+  // CommentRepository.ts
+
   async create(data: CreateCommentDto): Promise<IReturnResponse<IComments>> {
     try {
       const user = await db("users").where({ id: data.user_id }).first();
@@ -20,13 +22,20 @@ export default class CommentRepository {
         };
       }
 
-      const [insertedId] = await db(this.table).insert({
-        content: data.content,
-        user_id: data.user_id,
-        post_id: data.post_id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
+      const insertedResult = await db(this.table)
+        .insert({
+          content: data.content,
+          user_id: data.user_id,
+          post_id: data.post_id,
+          createAt: new Date(),
+          updateAt: new Date(),
+        })
+        .returning('id');
+
+      // A CORREÇÃO ESTÁ AQUI
+      // insertedResult é um array de objetos, ex: [{ id: 154 }]
+      // Acessamos o id da primeira (e única) linha inserida
+      const insertedId = insertedResult[0].id;
 
       const comment = await db(this.table)
         .select(
@@ -50,7 +59,7 @@ export default class CommentRepository {
       throw error;
     }
   }
-
+  // Ajuste também esta função para garantir a consistência
   async getAllCommentsByPost(post_id: number): Promise<IReturnResponse<IComments[]>> {
     try {
       const comments = await db(this.table)
@@ -65,13 +74,6 @@ export default class CommentRepository {
         .leftJoin("posts", "comments.post_id", "posts.id")
         .where("comments.post_id", post_id);
 
-      if (comments.length === 0) {
-        return {
-          message: "Nenhum comentário encontrado para este post.",
-          data: [],
-        };
-      }
-
       return {
         message: "Todos os comentários do post com usuários e post",
         data: comments as IComments[],
@@ -80,6 +82,7 @@ export default class CommentRepository {
       console.error("Erro ao buscar comentários por post:", error);
       throw error;
     }
+
   }
 
   async getAll(): Promise<IReturnResponse<IComments[]>> {
@@ -152,7 +155,7 @@ export default class CommentRepository {
         .where({ id })
         .update({
           content: data.content,
-          updated_at: new Date(),
+          updateAt: new Date(),
         });
 
       const updated = await this.getById(id);
@@ -172,10 +175,7 @@ export default class CommentRepository {
       const comment = await db(this.table).where({ id }).first();
 
       if (!comment) {
-        return {
-          message: "Comentário não encontrado",
-          data: null,
-        };
+        throw new Error("Comentário não encontrado");
       }
 
       await db(this.table).where({ id }).del();
