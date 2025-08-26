@@ -1,5 +1,5 @@
 export interface IReturnResponse<T = any> {
-    data?: T | null,
+    data?: T | null | any,
     message?: string,
     error?:string | T;
 }

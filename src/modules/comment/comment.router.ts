@@ -1,13 +1,18 @@
 import { Router, Request, Response } from "express";
 import CommentController from "./comment.controller";
 import CommentService from "./comment.service";
+import AuthMiddleware from "../../middlewares/auth.middleware";
+import { checkRole } from "../../middlewares/authRole.middleware";
+import { validateIdParam } from "../../middlewares/validateIdParam";
 
 const commentRouters = Router();
 
+const authMiddleware = new AuthMiddleware();
 const commentService = new CommentService()
 const commentController = new CommentController(commentService)
 
 commentRouters.post('/',
+    authMiddleware.auth,
     (req: Request, res: Response) => {commentController.create(req, res)}
 );
 
@@ -22,10 +27,14 @@ commentRouters.get('/:id',
 );
 
 commentRouters.patch('/:id',
+    validateIdParam('id'),
+    authMiddleware.auth,
     ((req: Request, res: Response) => { commentController.update(req, res) })
 );
  
 commentRouters.delete('/:id',
+    validateIdParam('id'),
+    authMiddleware.auth,
     ((req: Request, res: Response) => { commentController.delete(req, res) })
 );
 

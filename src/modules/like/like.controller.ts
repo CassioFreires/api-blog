@@ -12,6 +12,7 @@ export default class LikeController {
     async toggle(req: Request, res: Response): Promise<Response<IReturnResponse>> {
         try {
             const { user_id, post_id }: CreateLikeDto = req.body;
+            console.log(req.body)
 
             const validation = validationLikeSchema.safeParse({ user_id, post_id });
             if (!validation.success) {
