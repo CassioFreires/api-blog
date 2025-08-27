@@ -47,6 +47,29 @@ export default class LikeRepository {
     }
   }
 
+  async countByMultiplePosts(postIds: number[]): Promise<Record<number, number>> {
+    try {
+      const rows = await db(this.table)
+        .select("post_id")
+        .count("id as count")
+        .whereIn("post_id", postIds)
+        .groupBy("post_id");
+
+      // Transforma em objeto { post_id: count }
+      const result: Record<number, number> = {};
+      postIds.forEach(id => {
+        const row = rows.find(r => r.post_id === id);
+        result[id] = row ? Number(row.count) : 0;
+      });
+
+      return result;
+    } catch (error) {
+      console.error("Erro ao contar likes por múltiplos posts:", error);
+      throw error;
+    }
+  }
+
+
   async getAll(): Promise<IReturnResponse<ILike[]>> {
     try {
       const result = await db(this.table)
@@ -85,6 +108,13 @@ export default class LikeRepository {
         message: "Erro ao buscar like",
       };
     }
+  }
+  async checkIfUserLiked(user_id: number, post_id: number): Promise<boolean> {
+    const existing = await db(this.table)
+      .where({ user_id, post_id })
+      .first();
+
+    return !!existing; // true se já existe like, false se não
   }
 
   async delete(id: number): Promise<void> {

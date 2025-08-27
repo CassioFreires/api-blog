@@ -13,10 +13,17 @@ likeRouters.post('/toggle',
     authMiddleware.auth,
     (req: Request, res: Response) => {likeController.toggle(req, res)}
 );
-
+likeRouters.post('/count-multiple',
+  ((req: Request, res: Response) => { likeController.countByMultiplePosts(req, res) })
+);
 likeRouters.get('/count/:post_id',
     ((req: Request, res: Response) => { likeController.countByPost(req, res) })
 );
+
+likeRouters.get('/check/:postId',
+    authMiddleware.auth,
+    ((req: Request, res:Response) => {likeController.check(req, res)})
+)
 likeRouters.get('/',
     ((req: Request, res: Response) => { likeController.getAll(req, res) })
 );

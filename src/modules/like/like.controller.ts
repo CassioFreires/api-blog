@@ -12,7 +12,6 @@ export default class LikeController {
     async toggle(req: Request, res: Response): Promise<Response<IReturnResponse>> {
         try {
             const { user_id, post_id }: CreateLikeDto = req.body;
-            console.log(req.body)
 
             const validation = validationLikeSchema.safeParse({ user_id, post_id });
             if (!validation.success) {
@@ -23,6 +22,7 @@ export default class LikeController {
             }
 
             const result = await this.likeService.toggle(validation.data);
+            console.log(result)
             return res.status(200).json(result);
         } catch (error: any) {
             console.log(error.code)
@@ -33,21 +33,13 @@ export default class LikeController {
                 });
             }
             console.error("[LikeController][toggle]", error);
-            return res.status(500).json({
-                message: "Erro interno ao processar like",
-                error,
-            });
+            return res.status(500).json({ message: "Erro interno ao processar like", error });
         }
     }
 
     async countByPost(req: Request, res: Response): Promise<Response<IReturnResponse<number>>> {
         try {
             const post_id = Number(req.params.post_id);
-            if (isNaN(post_id)) {
-                return res.status(400).json({
-                    message: "ID do post inválido",
-                });
-            }
 
             const result = await this.likeService.countByPost(post_id);
             return res.status(200).json(result);
@@ -59,6 +51,23 @@ export default class LikeController {
             });
         }
     }
+
+    async countByMultiplePosts(req: Request, res: Response): Promise<Response> {
+        try {
+            const postIds: number[] = req.body.postIds; // recebe array de postIds
+            if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
+                return res.status(400).json({ message: "Informe um array de postIds válido" });
+            }
+
+            const result = await this.likeService.countByMultiplePosts(postIds);
+            console.log(result)
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error("[LikeController][countByMultiplePosts]", error);
+            return res.status(500).json({ message: "Erro ao contar curtidas de múltiplos posts", error });
+        }
+    }
+
 
     async getAll(req: Request, res: Response): Promise<Response<IReturnResponse<ILike[]>>> {
         try {
@@ -104,14 +113,35 @@ export default class LikeController {
         }
     }
 
-    async delete(req:Request, res:Response): Promise<void | any> {
+    async check(req: Request, res: Response): Promise<Response> {
+        try {
+            const { postId } = req.params;
+            const userId = req.user?.user.id; // vem do token
+            if (!userId || !postId) {
+                return res.status(400).json({ liked: false });
+            }
+
+            const liked = await this.likeService.check(Number(userId), Number(postId));
+
+            return res.status(200).json({ liked });
+        } catch (error) {
+            console.error("[LikeController][check]", error);
+            return res.status(500).json({
+                liked: false,
+                message: "Erro ao verificar like"
+            });
+        }
+    }
+
+
+    async delete(req: Request, res: Response): Promise<void | any> {
         try {
             const id = Number(req.params.id);
             const exists = await this.likeService.getById(id);
-            if(exists.data == null || !exists.data) return res.status(400).json({message:`Like com "ID = ${id}" não existe!`});
+            if (exists.data == null || !exists.data) return res.status(400).json({ message: `Like com "ID = ${id}" não existe!` });
             await this.likeService.delete(id);
-            return res.json({message: `Like com "ID = ${id}" deletado com sucesso!`})
-        }catch(error) {
+            return res.json({ message: `Like com "ID = ${id}" deletado com sucesso!` })
+        } catch (error) {
             console.log(error);
             return res.status(500).json({
                 message: 'Erro interno ao tentar deletar o like.'
