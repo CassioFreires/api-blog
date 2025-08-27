@@ -50,6 +50,19 @@ export default class LikeService {
         }
     }
 
+    async countByMultiplePosts(postIds: number[]): Promise<IReturnResponse<Record<number, number>>> {
+        try {
+            const counts = await this.likeRepository.countByMultiplePosts(postIds);
+            return {
+                data: counts,
+                message: "Curtidas contadas com sucesso para todos os posts",
+            };
+        } catch (error) {
+            console.error("[LikeService][countByPosts]", error);
+            throw error;
+        }
+    }
+
     async getAll(): Promise<IReturnResponse<ILike[]>> {
         try {
             const result = await this.likeRepository.getAll();
@@ -68,6 +81,10 @@ export default class LikeService {
             console.log(error);
             throw error;
         }
+    }
+
+    async check(user_id: number, post_id: number): Promise<boolean> {
+        return this.likeRepository.checkIfUserLiked(user_id, post_id);
     }
 
     async delete(id: number): Promise<void | any> {
