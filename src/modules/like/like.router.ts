@@ -20,9 +20,9 @@ likeRouters.get('/count/:post_id',
     ((req: Request, res: Response) => { likeController.countByPost(req, res) })
 );
 
-likeRouters.get('/check/:postId',
+likeRouters.get('/liked-by-user/:postId/:userId',
     authMiddleware.auth,
-    ((req: Request, res:Response) => {likeController.check(req, res)})
+    ((req: Request, res:Response) => {likeController.getUserLiked(req, res)})
 )
 likeRouters.get('/',
     ((req: Request, res: Response) => { likeController.getAll(req, res) })
@@ -31,6 +31,7 @@ likeRouters.get('/:id',
     ((req: Request, res: Response) => { likeController.getAll(req, res) })
 );
  
+
 likeRouters.delete('/:id',
     ((req: Request, res: Response) => { likeController.delete(req, res) })
 );

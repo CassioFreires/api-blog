@@ -9,16 +9,19 @@ export default class LikeService {
     private readonly likeRepository = new LikeRepository();
     private readonly postRepository = new PostRepository();
 
-    async toggle(data: CreateLikeDto): Promise<IReturnResponse<null>> {
+    async toggle(data: CreateLikeDto): Promise<IReturnResponse<{ user_liked: boolean, likes_count: number }>> {
         try {
-            const liked = await this.likeRepository.toggle(data);
+            const { liked, likesCount } = await this.likeRepository.toggle(data);
+
             return {
-                data: null,
-                message: liked ? "Like adicionado com sucesso" : "Like removido com sucesso",
-            }
+                data: {
+                    user_liked: liked,
+                    likes_count: likesCount
+                },
+                message: liked ? "Like adicionado com sucesso" : "Like removido com sucesso"
+            };
 
         } catch (error: any) {
-            // ⚠️ Tratamento de erro de chave estrangeira (PostgreSQL)
             if (error.code === "23503") {
                 return {
                     data: null,
@@ -30,6 +33,7 @@ export default class LikeService {
             throw new Error("Erro ao processar like");
         }
     }
+
 
     async countByPost(post_id: number): Promise<IReturnResponse<number>> {
         try {
@@ -83,9 +87,19 @@ export default class LikeService {
         }
     }
 
-    async check(user_id: number, post_id: number): Promise<boolean> {
-        return this.likeRepository.checkIfUserLiked(user_id, post_id);
+    async getUserLiked(user_id: number, post_id: number): Promise<boolean> {
+        if (!user_id || !post_id) {
+            throw new Error("Parâmetros inválidos: user_id e post_id são obrigatórios");
+        }
+
+        try {
+            return await this.likeRepository.getUserLiked(user_id, post_id);
+        } catch (error) {
+            console.error("[LikeService][getUserLiked]", error);
+            throw new Error("Erro ao acessar o repositório de likes");
+        }
     }
+
 
     async delete(id: number): Promise<void | any> {
         try {

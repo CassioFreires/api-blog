@@ -5,34 +5,51 @@ import { ILike } from "./interfaces/like.interface";
 
 export default class LikeRepository {
   private table = "likes";
+  private tableUsers = "users";
 
-  async toggle(data: CreateLikeDto): Promise<boolean> {
+  async toggle(data: CreateLikeDto): Promise<{ liked: boolean, likesCount: number }> {
     const { user_id, post_id } = data;
 
-    try {
-      const existing = await db(this.table)
-        .where({ user_id, post_id })
-        .first();
+    const postExists = await db("posts").where({ id: post_id }).first();
+    const userExists = await db("users").where({ id: user_id }).first();
 
-      if (existing) {
-        await db(this.table)
-          .where({ user_id, post_id })
-          .del();
-        return false; // Descurtido
-      }
+    if (!postExists || !userExists) {
+      throw { code: "23503", detail: "Usuário ou post informado não existe." };
+    }
 
+    let liked = false;
+
+    const existing = await db(this.table)
+      .where({ user_id, post_id })
+      .first();
+
+    if (existing) {
+      await db(this.table).where({ user_id, post_id }).del();
+      liked = false;
+    } else {
       await db(this.table).insert({
         user_id,
         post_id,
         createdAt: new Date(),
         updatedAt: new Date()
       });
-      return true; // Curtido
-    } catch (error) {
-      console.error("Erro no toggle de like:", error);
-      throw error;
+      liked = true;
     }
+
+    // pega likes atualizados
+    const result = await db(this.table)
+      .where({ post_id })
+      .count<{ count: string }>("id as count")
+      .first();
+
+    const likesCount = parseInt(result?.count ?? "0", 10);
+
+    return {
+      liked,
+      likesCount
+    };
   }
+
 
   async countByPost(post_id: number): Promise<number> {
     try {
@@ -109,13 +126,23 @@ export default class LikeRepository {
       };
     }
   }
-  async checkIfUserLiked(user_id: number, post_id: number): Promise<boolean> {
-    const existing = await db(this.table)
-      .where({ user_id, post_id })
-      .first();
+  async getUserLiked(user_id: number, post_id: number): Promise<boolean> {
+    if (!user_id || !post_id) {
+      throw new Error("Parâmetros inválidos: user_id e post_id são obrigatórios");
+    }
 
-    return !!existing; // true se já existe like, false se não
+    try {
+      const existing = await db(this.table)
+        .where({ user_id, post_id })
+        .first();
+
+      return !!existing; // true se já existe like, false se não
+    } catch (error) {
+      console.error("[LikeRepository][getUserLiked]", error);
+      throw new Error("Erro ao consultar banco de dados");
+    }
   }
+
 
   async delete(id: number): Promise<void> {
     try {
