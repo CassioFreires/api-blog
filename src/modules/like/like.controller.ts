@@ -113,25 +113,34 @@ export default class LikeController {
         }
     }
 
-    async check(req: Request, res: Response): Promise<Response> {
+    async getUserLiked(req: Request, res: Response): Promise<Response> {
         try {
             const { postId } = req.params;
-            const userId = req.user?.user.id; // vem do token
-            if (!userId || !postId) {
-                return res.status(400).json({ liked: false });
+            const userId = req.user?.user?.id; // vem do token
+
+            if (!userId) {
+                return res.status(401).json({ liked: false, message: "Usuário não autenticado" });
             }
 
-            const liked = await this.likeService.check(Number(userId), Number(postId));
+            if (!postId || isNaN(Number(postId))) {
+                return res.status(400).json({ liked: false, message: "postId inválido" });
+            }
+
+            let liked = false;
+            try {
+                liked = await this.likeService.getUserLiked(Number(userId), Number(postId));
+            } catch (err) {
+                console.error("[LikeController][getUserLiked][Service]", err);
+                return res.status(500).json({ liked: false, message: "Erro ao verificar like no serviço" });
+            }
 
             return res.status(200).json({ liked });
         } catch (error) {
-            console.error("[LikeController][check]", error);
-            return res.status(500).json({
-                liked: false,
-                message: "Erro ao verificar like"
-            });
+            console.error("[LikeController][getUserLiked][Controller]", error);
+            return res.status(500).json({ liked: false, message: "Erro interno ao verificar like" });
         }
     }
+
 
 
     async delete(req: Request, res: Response): Promise<void | any> {
