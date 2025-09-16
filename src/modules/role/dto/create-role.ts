@@ -1,7 +1,6 @@
 // entities/CreateRole.ts
-import { IRole } from "../interfaces/role.interface";
 
-export class CreateRole implements IRole {
+export class CreateRole{
   id?: number; // pode ser undefined até o banco preencher
   name: string;
   description: string;
