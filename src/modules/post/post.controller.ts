@@ -6,6 +6,9 @@ import PostService from "./post.service";
 import { IReturnResponse } from "./interfaces/response.interface";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { validationSchemaUpdatePost } from "./schema/validation-update-post";
+import path from "path";
+import fs from 'fs';
+import fsCallback from "fs/promises";
 
 export default class PostController {
     private readonly postService = new PostService();
@@ -163,23 +166,37 @@ export default class PostController {
 
     async updatePostByUser(req: Request, res: Response): Promise<Response> {
         try {
-            const newData: UpdatePostDto = req.body;
-            const { id } = newData;
+            const { id } = req.params;
             const postId = Number(id);
             const userIdAuthenticated = Number(req.user?.user.id);
 
+            const existingPostResponse: any = await this.postService.getById(postId);
+            const existingPost = existingPostResponse.data;
+
+            if (!existingPost) {
+                return res.status(404).json({ message: "Post não encontrado." });
+            }
+
+            // Se chegou imagem nova
+            let newData: UpdatePostDto = req.body;
+            if (req.file) {
+                // deleta imagem antiga se existir
+                if (existingPost.image_url) {
+                    const oldPath = path.join(process.cwd(), existingPost.image_url);
+                    fs.unlink(oldPath, (err) => {
+                        if (err) return console.warn("Erro ao deletar imagem antiga:", err);
+                        console.log("Imagem antiga deletada com sucesso!");
+                    });
+                }
+                newData.image_url = `uploads/${req.file.filename}`;
+            }
+
             const updatedPost = await this.postService.updatePostByUser(postId, userIdAuthenticated, newData);
 
-            if (updatedPost === null) {
-                return res.status(404).json({ message: 'Post não encontrado.' });
-            }
-            if (updatedPost === false) {
-                return res.status(403).json({ message: "Você só pode alterar seus próprios posts." });
-            }
-            return res.status(200).json({ message: 'Atualização realizada com sucesso.', updatePost: updatedPost });
+            return res.status(200).json({ message: "Atualizado com sucesso", updatePost: updatedPost });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: 'Erro interno no servidor.' });
+            return res.status(500).json({ message: "Erro interno no servidor" });
         }
     }
 
@@ -189,14 +206,35 @@ export default class PostController {
             const postId = Number(id);
             const userIdAuthenticated = Number(req.user?.user.id);
 
-            const deletedPost = await this.postService.deletePostByUser(postId, userIdAuthenticated);
+            // Pega o post antes de deletar
+            const existingPostResponse: any = await this.postService.getById(postId);
+            const existingPost = existingPostResponse.data;
 
-            if (deletedPost === null) {
+            if (!existingPost) {
                 return res.status(404).json({ message: "Post não encontrado." });
             }
-            if (deletedPost === false) {
+
+            if (existingPost.user_id !== userIdAuthenticated) {
                 return res.status(403).json({ message: "Você só pode deletar seus próprios posts." });
             }
+
+            // Deleta a imagem do servidor se existir
+            if (existingPost.image_url) {
+                const imagePath = path.join(process.cwd(), existingPost.image_url);
+
+                try {
+                    await fsCallback.access(imagePath); // verifica se o arquivo existe
+                    await fsCallback.unlink(imagePath); // deleta o arquivo
+                    console.log("Imagem deletada com sucesso:", imagePath);
+                } catch {
+                    // Se o arquivo não existe ou erro, não impede a deleção do post
+                    console.warn("Imagem não encontrada ou erro ao deletar:", existingPost.image_url);
+                }
+            }
+
+            // Deleta o post do banco
+            await this.postService.deletePostByUser(postId, userIdAuthenticated);
+
             return res.status(200).json({ message: "Post deletado com sucesso." });
         } catch (error) {
             console.error(error);
@@ -204,14 +242,19 @@ export default class PostController {
         }
     }
 
-    async createPostByUser(req: Request, res: Response): Promise<Response<IPost | { message: string; errors?: any }>> {
+    async createPostByUser(req: Request, res: Response): Promise<Response> {
         try {
             const userId = Number(req.user?.user.id);
             if (!userId) {
                 return res.status(401).json({ message: "Usuário não autenticado." });
             }
 
-            const validation = creatPostSchema.safeParse(req.body);
+            const rawData = {
+                ...req.body,
+                category_id: Number(req.body.category_id),
+            };
+
+            const validation = creatPostSchema.safeParse(rawData);
             if (!validation.success) {
                 return res.status(400).json({
                     message: "Falha de validação",
@@ -220,6 +263,12 @@ export default class PostController {
             }
 
             const postData: CreatePostDto = { ...validation.data, user_id: userId };
+
+            // Se houver arquivo de imagem
+            if (req.file) {
+                postData.image_url = req.file.path.replace(/\\/g, '/');
+            }
+
             const post = await this.postService.create(postData);
 
             return res.status(201).json({ post });

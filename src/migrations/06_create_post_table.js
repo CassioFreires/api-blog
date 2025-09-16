@@ -1,3 +1,5 @@
+const { nullable } = require('zod/v4');
+
 /**
  * @param {import('knex').Knex} knex
  */
@@ -7,6 +9,7 @@ exports.up = function(knex) {
     table.string('title').nullable();
     table.string('subtitle').nullable();
     table.string('content').nullable();
+    table.string('image_url').nullable();
 
     table.integer('user_id').unsigned().notNullable()
       .references('id').inTable('users')

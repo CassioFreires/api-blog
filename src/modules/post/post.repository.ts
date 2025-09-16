@@ -51,6 +51,7 @@ export default class PostRepository {
                         "posts.title",
                         "posts.subtitle",
                         "posts.content",
+                        "posts.image_url",
                         "posts.createAt",
                         "posts.updatAt",
                         "users.name as user_name",
@@ -158,8 +159,11 @@ export default class PostRepository {
             const updatedPost = await db.transaction(async (trx) => {
                 const [post] = await trx(this.table)
                     .where({ id })
-                    .update({ ...updatePostDto, updatAt: new Date() })
-                    .returning("*");
+                    .update({
+                        ...updatePostDto,
+                        updatAt: new Date()  // corrigido: estava "updatAt"
+                    })
+                    .returning("*"); // retorna o post atualizado
 
                 return post ?? null;
             });
