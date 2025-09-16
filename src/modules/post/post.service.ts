@@ -106,29 +106,39 @@ export default class PostService {
         }
     }
 
-    async updatePostByUser(postId: number, userId: number, updatePostDto: UpdatePostDto): Promise<IPost | false | null> {
+    async updatePostByUser(
+        postId: number,
+        userId: number,
+        updatePostDto: UpdatePostDto
+    ): Promise<IPost | false | null> {
         try {
             const post = await this.postRepository.getById(postId);
+            console.log(postId)
             if (!post || !post.data) {
                 return null; // Post não encontrado
             }
 
-            const postUserId = Array.isArray(post.data) ? post.data[0]?.user_id : post.data.user_id;
+            const postUserId = Array.isArray(post.data)
+                ? post.data[0]?.user_id
+                : post.data.user_id;
 
             if (postUserId !== userId) {
                 return false; // Acesso negado
             }
 
-            const newUpdatePostDto = {
-                title: updatePostDto.title?.toLocaleLowerCase(),
-                subtitle: updatePostDto.subtitle?.toLocaleLowerCase(),
-                content: updatePostDto.content?.toLocaleLowerCase()
-            };
+            // Monta objeto de update dinamicamente
+            const newUpdatePostDto: any = {};
 
+            if (updatePostDto.title) newUpdatePostDto.title = updatePostDto.title;
+            if (updatePostDto.subtitle) newUpdatePostDto.subtitle = updatePostDto.subtitle;
+            if (updatePostDto.content) newUpdatePostDto.content = updatePostDto.content;
+            if (updatePostDto.image_url) newUpdatePostDto.image_url = updatePostDto.image_url;
+
+            // Atualiza no repositório
             const updatedPost = await this.postRepository.update(postId, newUpdatePostDto);
             return updatedPost as IPost;
         } catch (error) {
-            console.error('Erro no serviço ao atualizar post do usuário:', error);
+            console.error("Erro no serviço ao atualizar post do usuário:", error);
             throw error;
         }
     }

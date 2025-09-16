@@ -9,6 +9,7 @@ import PostService from "./post.service";
 import AuthMiddleware from "../../middlewares/auth.middleware";
 import { checkRole } from "../../middlewares/authRole.middleware";
 import { validateIdParam } from "../../middlewares/validateIdParam";
+import { upload } from "../../middlewares/upload.middleware";
 
 
 const postRouters = Router();
@@ -25,6 +26,7 @@ postRouters.post('/',
 
 postRouters.post('/createpostbyuser',
     authMiddleware.auth,
+    upload.single('image'),
     (req:Request, res:Response) => {userController.createPostByUser(req, res)}
 )
 
@@ -41,8 +43,9 @@ postRouters.get('/allpostsbyuser',
     (req: Request, res: Response) => { userController.allPostsByUser(req, res) },
 )
 
-postRouters.patch('/updatepostbyuser',
+postRouters.patch('/updatepostbyuser/:id',
     authMiddleware.auth,
+    upload.single('image'),
     (req: Request, res: Response) => { userController.updatePostByUser(req, res)}
 )
 postRouters.get('/:id',

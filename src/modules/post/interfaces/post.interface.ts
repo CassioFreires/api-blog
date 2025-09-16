@@ -5,6 +5,7 @@ export interface IPost {
     title: string;
     subtitle: string;
     content: string;
+    image_url?:string;
     category:ICategory;
     user_id?:number;
     user_name?:string;
