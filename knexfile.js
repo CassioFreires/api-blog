@@ -4,20 +4,14 @@ module.exports = {
   development: {
     client: 'pg',
     connection: {
-      host: process.env.DEV_DB_HOST || 'localhost',
-      port: process.env.DEV_DB_PORT ? parseInt(process.env.DEV_DB_PORT) : 5432,
-      user: process.env.DEV_DB_USERNAME || 'postgres',
-      password: process.env.DEV_DB_PASSWORD || 'Freires2@',
-      database: process.env.DEV_DB_DATABASE || 'blog',
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+      user: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_DATABASE || 'blog',
     },
-    migrations: {
-      directory: './src/migrations',
-      extension: 'js',
-    },
-    seeds: {
-      directory: './src/seeds',
-      extension: 'js',
-    },
+    migrations: { directory: './src/migrations', extension: 'js' },
+    seeds: { directory: './src/seeds', extension: 'js' },
   },
 
   hml: {
