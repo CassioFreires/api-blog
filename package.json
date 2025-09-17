@@ -13,7 +13,12 @@
     "rollback:prod": "knex migrate:rollback --env production",
     "seed:dev": "knex seed:run --env development",
     "seed:hml": "knex seed:run --env hml",
-    "seed:prod": "knex seed:run --env production"
+    "seed:prod": "knex seed:run --env production",
+    "seed:run-initial": "npm run seed:role && npm run seed:permissions && npm run seed:role-permissions && npm run seed:categories",
+    "seed:role": "npx knex seed:run --specific=01_role_seed.js",
+    "seed:permissions": "npx knex seed:run --specific=02_permissions_seed.js",
+    "seed:role-permissions": "npx knex seed:run --specific=03_role_permissions_seed.js",
+    "seed:categories": "npx knex seed:run --specific=05_categories_seed.js"
   },
   "keywords": [],
   "author": "",

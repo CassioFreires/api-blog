@@ -91,33 +91,63 @@ export default class PostRepository {
     }
 
     async getTop(): Promise<IReturnResponse> {
+        const cacheKey = `posts:top`;
+
+        const cached = cache.get<IReturnResponse>(cacheKey);
+        if (cached) {
+            console.log("✅ Cache HIT - getTop");
+            return cached;
+        }
+
         try {
-            const posts = await db.raw(`
-                WITH RankedPosts AS (
-                    SELECT
-                        p.*,
-                        u.name AS user_name,
-                        u.email AS user_email,
-                        c.name AS category_name,
-                        ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY p."createAt" DESC) as rn
-                    FROM posts AS p
-                    JOIN users AS u ON u.id = p.user_id
-                    JOIN categories AS c ON c.id = p.category_id
+            const posts = await db.with("RankedPosts", (qb) => {
+                qb.select(
+                    "p.*",
+                    "u.name as user_name",
+                    "u.email as user_email",
+                    "c.name as category_name"
                 )
-                SELECT
-                    id, title, subtitle, content, "user_id", "category_id",
-                    "createAt", "updatAt", user_name, user_email, category_name
-                FROM RankedPosts
-                WHERE rn = 1
-                ORDER BY "createAt" DESC;
-            `);
-            return { message: "Últimas postagens por categoria encontradas", data: posts.rows };
+                    .from("posts as p")
+                    .join("users as u", "u.id", "p.user_id")
+                    .join("categories as c", "c.id", "p.category_id")
+                    .orderBy("p.createAt", "desc")
+                    .groupBy("c.id", "p.id", "u.id"); // Adicione um GROUP BY para garantir que você obtenha um post por categoria
+            }).select(
+                "id",
+                "title",
+                "subtitle",
+                "content",
+                "user_id",
+                "category_id",
+                "createAt",
+                "updatAt",
+                "image_url",
+                "user_name",
+                "user_email",
+                "category_name"
+            ).from("RankedPosts").orderBy("createAt", "desc");
+
+            // Lógica para obter a última postagem de cada categoria
+            const latestPostsByCategory = new Map<number, any>();
+            posts.forEach(post => {
+                if (!latestPostsByCategory.has(post.category_id)) {
+                    latestPostsByCategory.set(post.category_id, post);
+                }
+            });
+
+            const result = {
+                message: "Últimas postagens por categoria encontradas",
+                data: Array.from(latestPostsByCategory.values()),
+            };
+
+            cache.set(cacheKey, result);
+            console.log("📦 Cache MISS - getTop (salvando no cache)");
+            return result;
         } catch (error) {
             console.log(error);
             throw error;
         }
     }
-
     async getById(id: number): Promise<IReturnResponse> {
         const cacheKey = `post:${id}`;
 
