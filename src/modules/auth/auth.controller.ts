@@ -14,6 +14,7 @@ export default class AuthController {
     async signup(req: Request, res: Response): Promise<Response<any>> {
         try {
             const signupAuthDto: SignupAuthDto = req.body.data;
+            console.log(signupAuthDto)
             const validation = validationSignupSchema.safeParse(signupAuthDto);
 
              const resultUser = await this.userService.getByEmail(signupAuthDto.email);
