@@ -4,6 +4,8 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user';
 import { IUser } from './interfaces/user.interface';
 import { validationUpdateUser } from './schema/update-user.schema';
+import fs from 'fs';
+import path from 'path';
 
 export class UserController {
     constructor(private readonly userService: UserService) { }
@@ -14,7 +16,7 @@ export class UserController {
 
             const resultUser = await this.userService.getByEmail(data.email);
             if (resultUser) {
-                return res.status(400).json({ message: 'Email já está em uso'});
+                return res.status(400).json({ message: 'Email já está em uso' });
             }
 
             const validation = validationUpdateUser.safeParse(data);
@@ -75,19 +77,41 @@ export class UserController {
             const userIdFromToken = Number(req.user?.user.id);
             const idToUpdate = Number(req.params.id)
 
+
+            // Segurança: só pode atualizar o próprio perfil
             if (userIdFromToken !== idToUpdate) {
                 return res.status(403).json({ message: "Acesso negado" });
             }
 
-
-            const user = await this.userService.update(id, data);
-
-            if (!user) {
-                return res.status(404).json({ message: "User not found or not updated" });
+            // Busca usuário existente
+            const existingUser = await this.userService.getById(idToUpdate);
+            if (!existingUser) {
+                return res.status(404).json({ message: "Usuário não encontrado" });
             }
 
-            // ✅ Retorna só o usuário atualizado
-            return res.status(200).json(user);
+            // Se houver upload de nova imagem
+            if (req.file) {
+                // Deleta avatar antigo se existir
+                if (existingUser.avatarUrl) {
+                    const oldPath = path.join(process.cwd(), existingUser.avatarUrl);
+                    fs.unlink(oldPath, (err) => {
+                        if (err) return console.warn("Erro ao deletar avatar antigo:", err);
+                        console.log("Avatar antigo deletado com sucesso!");
+                    });
+                }
+
+                // Atualiza o campo da imagem
+                data.avatarUrl = `/uploads/imgAvatars/${req.file.filename}`;
+            }
+
+            // Atualiza usuário
+            const updatedUser = await this.userService.update(idToUpdate, data);
+
+            if (!updatedUser) {
+                return res.status(404).json({ message: "Usuário não atualizado" });
+            }
+
+            return res.status(200).json(updatedUser);
 
         } catch (error) {
             console.error("Error updating user:", error);

@@ -3,6 +3,7 @@ import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
 import AuthMiddleware from "../../middlewares/auth.middleware";
 import { checkRole } from "../../middlewares/authRole.middleware";
+import { upload } from "../../middlewares/upload.middleware";
 
 const authMiddleware = new AuthMiddleware()
 
@@ -23,6 +24,7 @@ userRouters.get('/:id',
 
 userRouters.patch('/:id',
     authMiddleware.auth,
+    upload.single('avatar'),
     ((req: Request, res: Response) => { userController.update(req, res) })
 );
 

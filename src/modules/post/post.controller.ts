@@ -188,7 +188,7 @@ export default class PostController {
                         console.log("Imagem antiga deletada com sucesso!");
                     });
                 }
-                newData.image_url = `uploads/${req.file.filename}`;
+                newData.image_url = `/uploads/imgPosts/${req.file.filename}`;
             }
 
             const updatedPost = await this.postService.updatePostByUser(postId, userIdAuthenticated, newData);
@@ -266,7 +266,7 @@ export default class PostController {
 
             // Se houver arquivo de imagem
             if (req.file) {
-                postData.image_url = req.file.path.replace(/\\/g, '/');
+                postData.image_url = `/uploads/imgPosts/${req.file.filename}`;
             }
 
             const post = await this.postService.create(postData);
