@@ -26,7 +26,7 @@ postRouters.post('/',
 
 postRouters.post('/createpostbyuser',
     authMiddleware.auth,
-    upload.single('image'),
+    upload.single('postImage'),
     (req:Request, res:Response) => {userController.createPostByUser(req, res)}
 )
 
@@ -45,7 +45,7 @@ postRouters.get('/allpostsbyuser',
 
 postRouters.patch('/updatepostbyuser/:id',
     authMiddleware.auth,
-    upload.single('image'),
+    upload.single('postImage'),
     (req: Request, res: Response) => { userController.updatePostByUser(req, res)}
 )
 postRouters.get('/:id',
