@@ -26,9 +26,9 @@ export default class PostService {
         }
     }
 
-    async getAll(limit: number, page: number): Promise<IReturnResponse> {
+    async getAll(limit: number, page: number, query:string='', category: string = '', sort: string = ''): Promise<IReturnResponse> {
         try {
-            const posts = await this.postRepository.getAll(limit, page);
+            const posts = await this.postRepository.getAll(limit, page, query, category, sort);
             return posts;
         } catch (error) {
             console.log(error);
