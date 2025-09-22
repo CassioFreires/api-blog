@@ -41,8 +41,12 @@ export default class PostController {
     async getAll(req: Request, res: Response): Promise<Response<IReturnResponse>> {
         const limit = parseInt(req.query.limit as string) || 5;
         const page = parseInt(req.query.page as string) || 1;
+        const query = (req.query.q as string) || '';
+        const category = (req.query.category as string) || ''; // Novo: extrai o filtro de categoria
+        const sort = (req.query.sort as string) || 'newest'; // Novo: extrai a ordem de sort
+
         try {
-            const posts = await this.postService.getAll(limit, page);
+            const posts = await this.postService.getAll(limit, page, query, category, sort); // Passa os novos parâmetros
             if (!posts.data || (Array.isArray(posts.data) && posts.data.length === 0)) {
                 return res.status(404).json({ message: 'Não existe postagens disponíveis' });
             }
