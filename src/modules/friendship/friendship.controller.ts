@@ -35,7 +35,6 @@ export default class FriendshipController {
     async getPendingFriendships(req: Request, res: Response): Promise<any> {
         try {
             const idUser = Number(req.user?.user.id);
-            console.log(idUser)
             if (!idUser) {
                 return res.status(401).json({ message: 'Usuário não autenticado.' });
             }
