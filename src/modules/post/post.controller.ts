@@ -286,4 +286,34 @@ export default class PostController {
             return res.status(500).json({ message: "Erro interno ao tentar criar o post." });
         }
     }
+
+    async getPostsByUser(req: Request, res: Response): Promise<Response> {
+        try {
+            const userId = Number(req.params.id); // ← ID do usuário vindo da rota
+
+            if (!userId) {
+                return res.status(400).json({ message: "ID do usuário inválido." });
+            }
+
+            const posts = await this.postService.getPostsByUser(userId);
+
+            if (!posts || (Array.isArray(posts) && posts.length === 0)) {
+                return res
+                    .status(404)
+                    .json({ message: "Nenhum post encontrado para este usuário." });
+            }
+
+            return res.status(200).json({
+                message: "Posts encontrados com sucesso.",
+                data: posts,
+            });
+        } catch (error) {
+            console.error(
+                "Erro interno no servidor ao tentar obter os posts do usuário:",
+                error
+            );
+            return res.status(500).json({ message: "Erro interno no servidor." });
+        }
+    }
+
 }
