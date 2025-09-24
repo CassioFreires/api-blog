@@ -26,7 +26,7 @@ export default class PostService {
         }
     }
 
-    async getAll(limit: number, page: number, query:string='', category: string = '', sort: string = ''): Promise<IReturnResponse> {
+    async getAll(limit: number, page: number, query: string = '', category: string = '', sort: string = ''): Promise<IReturnResponse> {
         try {
             const posts = await this.postRepository.getAll(limit, page, query, category, sort);
             return posts;
@@ -160,6 +160,16 @@ export default class PostService {
             return deletedPost as IPost;
         } catch (error) {
             console.error('Erro no serviço ao deletar post do usuário:', error);
+            throw error;
+        }
+    }
+
+    async getPostsByUser(userId: number): Promise<IPost[] | IReturnResponse> {
+        try {
+            const posts = await this.postRepository.getPostsByUser(userId);
+            return posts;
+        } catch (error) {
+            console.error("Erro no serviço ao buscar posts do usuário:", error);
             throw error;
         }
     }

@@ -27,7 +27,7 @@ postRouters.post('/',
 postRouters.post('/createpostbyuser',
     authMiddleware.auth,
     upload.single('postImage'),
-    (req:Request, res:Response) => {userController.createPostByUser(req, res)}
+    (req: Request, res: Response) => { userController.createPostByUser(req, res) }
 )
 
 // A rota '/top' estava duplicada. Uma delas foi removida.
@@ -46,7 +46,7 @@ postRouters.get('/allpostsbyuser',
 postRouters.patch('/updatepostbyuser/:id',
     authMiddleware.auth,
     upload.single('postImage'),
-    (req: Request, res: Response) => { userController.updatePostByUser(req, res)}
+    (req: Request, res: Response) => { userController.updatePostByUser(req, res) }
 )
 postRouters.get('/:id',
     validateIdParam('id'),
@@ -56,7 +56,13 @@ postRouters.get('/:id',
 postRouters.get('/bycategories/:slug',
     (req, res) => {
         userController.getAllPostsByCategory(req, res);
-});
+    });
+
+postRouters.get('/by-user/:id',
+    authMiddleware.auth,
+    (req, res) => {userController.getPostsByUser(req, res)
+
+    });
 
 postRouters.patch('/:id',
     validateIdParam('id'),
