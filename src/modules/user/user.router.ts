@@ -16,22 +16,8 @@ userRouters.post('/',
     ((req: Request, res: Response) => { userController.create(req, res) })
 );
 
-userRouters.post('/add-friends',
-    authMiddleware.auth,
-    (req: Request, res: Response) => userController.addFriends(req, res)
-);
-
-
 userRouters.get('/',
     ((req: Request, res: Response) => { userController.getAll(req, res) })
-);
-userRouters.get('/friendship-sugestion',
-    authMiddleware.auth,
-    (req: Request, res: Response) => { userController.getFriendshipSuggestions(req, res) }
-)
-userRouters.get('/accepted-friends',
-    authMiddleware.auth,
-    (req: Request, res: Response) => { userController.getAcceptedFriends(req, res) }
 );
 
 userRouters.get('/:id',

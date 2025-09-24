@@ -1,9 +1,9 @@
-import UserEntity from "../../../modules/user/entities/user.entities";
-import { PostEntity } from "../../../modules/post/entities/post.entities";
+import { IUser } from "src/modules/user/interfaces/user.interface";
+import { IPost } from "src/modules/post/interfaces/post.interface";
 
 export interface IComments {
     id:number;
-    post:PostEntity;
-    user:UserEntity;
+    post:IPost;
+    user:IUser;
     createAt:Date;
 }
