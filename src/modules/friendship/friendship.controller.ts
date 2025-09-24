@@ -42,7 +42,10 @@ export default class FriendshipController {
             const requests = await this.friendshipService.getPendingFriendships(idUser);
 
             if (!requests || requests.length === 0) {
-                return res.status(404).json({ message: 'Você não tem pedidos de amizade pendentes.' });
+                return res.status(200).json({
+                    message: 'Você não tem pedidos de amizade pendentes.',
+                    data: []
+                });
             }
 
             return res.status(200).json({
