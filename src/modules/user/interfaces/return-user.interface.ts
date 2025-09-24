@@ -1,6 +1,6 @@
-import UserEntity from "../entities/user.entities";
+import { IUser } from "./user.interface";
 
 export interface ReturnUserDTO {
   message: string;
-  data: UserEntity | UserEntity[];
+  data: IUser | IUser[];
 }

@@ -73,45 +73,5 @@ export class UserService {
     }
   }
 
-  async getFriendshipSuggestions(userId: number): Promise<IUser[]> {
-    try {
-      return await this.userRepository.getFriendshipSuggestions(userId);
-    } catch (error: any) {
-      // Centraliza o tratamento de erro
-      console.error('Erro no serviço ao buscar sugestões:', error);
-      throw new Error('Erro ao buscar sugestões de amizade.');
-    }
-  }
 
-  async getAcceptedFriends(userId: number): Promise<IUser[]> {
-    try {
-      return await this.userRepository.getAcceptedFriends(userId);
-    } catch (error: any) {
-      console.error('Erro no serviço ao buscar amigos:', error);
-      throw new Error('Erro ao buscar a lista de amigos.');
-    }
-  }
-  
-
-  async addFriend(userId: number, friendId: number): Promise<void> {
-    try {
-      // 1. Prevent a user from adding themselves
-      if (userId === friendId) {
-        throw new Error('Cannot add yourself as a friend.');
-      }
-
-      // 2. Check if a pending or accepted friendship already exists
-      const existingFriendship = await this.userRepository.getFriendshipStatus(userId, friendId);
-      if (existingFriendship) {
-        throw new Error('Friendship request already sent or user is already your friend.');
-      }
-
-      // 3. Insert the new friendship entry
-      await this.userRepository.addFriend(userId, friendId);
-
-    } catch (error) {
-      console.error('Error in service layer while adding friend:', error);
-      throw error;
-    }
-  }
 }
