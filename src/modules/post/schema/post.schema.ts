@@ -1,22 +1,23 @@
 import { z } from "zod";
 
-export const creatPostSchema = z.object({
-  title: z
-    .string()
-    .min(5, { message: "Texto inválido" })
-    .nonempty({ message: "Texto em branco" }),
-
-  subtitle: z
-    .string()
-    .min(5, { message: "Subtitle inválido" })
-    .nonempty({ message: "Subtitle em branco" }),
-
-  content: z
-    .string()
-    .min(10, { message: "Content inválido" })
-    .nonempty({ message: "Content em branco" }),
-
-  category_id: z
-    .number({ invalid_type_error: "ID da categoria deve ser numérico" })
-    .int({ message: "ID da categoria inválido" }),
-});
+export const createPostSchema = z
+  .object({
+    postType: z.enum(['standard', 'poll']),
+    title: z.string().optional(),
+    subtitle: z.string().optional(),
+    category_id: z.number().optional(),
+    content: z.string().optional(),
+    question: z.string().optional(),
+    options: z.array(z.string()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.postType === 'standard') {
+      if (!data.title) ctx.addIssue({ path: ['title'], message: 'Título obrigatório para post padrão', code: z.ZodIssueCode.custom });
+      if (!data.subtitle) ctx.addIssue({ path: ['subtitle'], message: 'Subtítulo obrigatório para post padrão', code: z.ZodIssueCode.custom });
+      if (!data.category_id) ctx.addIssue({ path: ['category_id'], message: 'Categoria obrigatória', code: z.ZodIssueCode.custom });
+      if (!data.content) ctx.addIssue({ path: ['content'], message: 'Conteúdo obrigatório', code: z.ZodIssueCode.custom });
+    } else if (data.postType === 'poll') {
+      if (!data.question) ctx.addIssue({ path: ['question'], message: 'Pergunta obrigatória para enquete', code: z.ZodIssueCode.custom });
+      if (!data.options || data.options.length < 2) ctx.addIssue({ path: ['options'], message: 'A enquete deve ter pelo menos 2 opções', code: z.ZodIssueCode.custom });
+    }
+  });

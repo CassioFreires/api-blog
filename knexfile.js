@@ -8,7 +8,7 @@ module.exports = {
       port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
       user: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_DATABASE || 'blog',
+      database: process.env.DB_DATABASE || 'moveis',
     },
     migrations: { directory: './src/migrations', extension: 'js' },
     seeds: { directory: './src/seeds', extension: 'js' },

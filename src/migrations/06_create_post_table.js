@@ -32,6 +32,7 @@ exports.up = function(knex) {
 /**
  * @param {import('knex').Knex} knex
  */
-exports.down = function(knex) {
-  return knex.schema.dropTableIfExists('posts');
+exports.down = async function(knex) {
+  await knex.schema.dropTableIfExists("post_polls"); // dependente
+  await knex.schema.dropTableIfExists("posts");      // principal
 };

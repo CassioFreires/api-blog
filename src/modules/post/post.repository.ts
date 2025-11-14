@@ -19,15 +19,13 @@ export default class PostRepository {
                     .insert({ ...data, createAt: new Date(), updatAt: new Date() })
                     .returning("*");
 
+                cache.del('posts:*');
                 return newPost;
             });
 
-            // ❌ Invalida cache relacionado
-            cache.del("posts:*");
-
             return post;
         } catch (error) {
-            console.log(error);
+            console.error(error);
             throw error;
         }
     }
@@ -220,7 +218,7 @@ export default class PostRepository {
             const response: IReturnResponse = { message: "Postagem encontrada com sucesso", data: post };
             cache.set(cacheKey, response);
 
-            console.log("📦 Cache MISS - getById (salvando no cache)");
+            console.log(" Cache MISS - getById (salvando no cache)");
             return response;
         } catch (error) {
             console.log(error);

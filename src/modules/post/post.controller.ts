@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { CreatePostDto } from "./dto/create-post.dto";
 import { IPost } from "./interfaces/post.interface";
-import { creatPostSchema } from "./schema/post.schema";
+import { createPostSchema } from "./schema/post.schema";
 import PostService from "./post.service";
 import { IReturnResponse } from "./interfaces/response.interface";
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -16,7 +16,7 @@ export default class PostController {
     async create(req: Request, res: Response): Promise<Response<IPost | IReturnResponse>> {
         try {
             const data: CreatePostDto = req.body;
-            const validation = creatPostSchema.safeParse(data);
+            const validation = createPostSchema.safeParse(data);
             if (!validation.success) {
                 return res.status(400).json({
                     message: 'Falha na validação',
@@ -249,43 +249,45 @@ export default class PostController {
     async createPostByUser(req: Request, res: Response): Promise<Response> {
         try {
             const userId = Number(req.user?.user.id);
-            if (!userId) {
-                return res.status(401).json({ message: "Usuário não autenticado." });
-            }
+            if (!userId)
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
 
             const rawData = {
                 ...req.body,
-                category_id: Number(req.body.category_id),
+                category_id: req.body.category_id ? Number(req.body.category_id) : undefined,
+                user_id: userId,
             };
 
-            const validation = creatPostSchema.safeParse(rawData);
+            const validation = createPostSchema.safeParse(rawData);
             if (!validation.success) {
                 return res.status(400).json({
-                    message: "Falha de validação",
+                    message: 'Falha de validação',
                     errors: validation.error.flatten().fieldErrors,
                 });
             }
 
-            const postData: CreatePostDto = { ...validation.data, user_id: userId };
+            const postData: CreatePostDto = {
+                ...validation.data,
+                user_id: userId,
+            };
 
-            // Se houver arquivo de imagem
+            // Upload de imagem
             if (req.file) {
                 postData.image_url = `/uploads/imgPosts/${req.file.filename}`;
             }
 
+            // Chama o service que agora suporta posts e enquetes
             const post = await this.postService.create(postData);
 
             return res.status(201).json({ post });
         } catch (error: any) {
             console.error(error);
-            if (error.code === "23503") {
-                return res.status(400).json({
-                    message: "Usuário ou categoria não existem. Violação de chave estrangeira.",
-                });
-            }
-            return res.status(500).json({ message: "Erro interno ao tentar criar o post." });
+            if (error.code === '23503')
+                return res.status(400).json({ message: 'Usuário ou categoria não existem.' });
+            return res.status(500).json({ message: 'Erro interno ao tentar criar o post.' });
         }
     }
+
 
     async getPostsByUser(req: Request, res: Response): Promise<Response> {
         try {
